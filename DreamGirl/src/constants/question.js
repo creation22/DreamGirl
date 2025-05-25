@@ -1,0 +1,67 @@
+export const questions = [
+  {
+    id: 1,
+    question: "What's the aura of your dream girl?",
+    type: "options",
+    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Sexy & Alluring", "Custom"],
+    allowCustom: true,
+  },
+  {
+    id: 2,
+    question: "What's her race?",
+    type: "options",
+    options: ["Indian", "White/Caucasian", "Black/African", "Asian", "Custom"],
+    allowCustom: true,
+  },
+  {
+    id: 3,
+    question: "What's her body type?",
+    type: "options",
+    options: ["Slim", "Athletic", "Curvy", "Thick", "Plus Size"],
+  },
+  {
+    id: 4,
+    question: "What’s her skin tone?",
+    type: "options",
+    options: ["Fair/Light", "Medium/Olive", "Brown", "Dark", "Tan"],
+  },
+  {
+    id: 5,
+    question: "How would you describe her facial structure?",
+    type: "options",
+    options: ["Oval", "Round", "Square", "Diamond", "Heart Shaped"],
+  },
+  {
+    id: 6,
+    question: "What kind of outfit is she wearing?",
+    type: "options",
+    options: ["Elegant", "Casual", "Trendy", "Traditional", "Custom"],
+    allowCustom: true,
+  },
+  {
+    id: 7,
+    question: "What hairstyle does she have?",
+    type: "options",
+    options: ["Long & Straight", "Curly", "Short Bob", "Braided"],
+  },
+  {
+    id: 8,
+    question: "What kind of facial expression does she have?",
+    type: "options",
+    options: ["Smiling", "Serious", "Shy", "Playful", "Custom"],
+    allowCustom: true,
+  },
+  {
+    id: 9,
+    question: "Any accessories?",
+    type: "options",
+    options: ["Glasses", "Jewelry", "Piercing/Tattoos", "Custom", "None"],
+    allowCustom: true,
+  },
+  {
+    id: 10,
+    question: "Choose an image generation style",
+    type: "options",
+    options: ["Anime", "3D Render", "Semi-Realistic", "Cartoon", "Realistic"],
+  },
+];
