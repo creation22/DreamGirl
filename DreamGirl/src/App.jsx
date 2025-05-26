@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { TypewriterEffectDemo } from './components/TypeWriterUse'
 import { SparklesPreview } from './components/Question'
 import GenerateImage from './utils/generateImage'
-
+import { Analytics } from "@vercel/analytics/react"
 function App() {
   const [currentPage, setCurrentPage] = useState('welcome') // 'welcome', 'questions', 'result'
   const [userAnswers, setUserAnswers] = useState({})
@@ -23,6 +23,7 @@ function App() {
 
   return (
     <>
+      <Analytics/>
       {currentPage === 'welcome' && (
         <TypewriterEffectDemo onStart={handleStartQuestions} />
       )}

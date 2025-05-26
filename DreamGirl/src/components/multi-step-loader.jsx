@@ -52,7 +52,7 @@ const LoaderCore = ({
             className={cn("text-left flex gap-2 mb-4")}
             initial={{ opacity: 0, y: -(value * 40) }}
             animate={{ opacity: opacity, y: -(value * 40) }}
-            transition={{ duration: 0.5 }}>
+            transition={{ duration: 0.1 }}>
             <div>
               {index > value && (
                 <CheckIcon className="text-black dark:text-white" />
@@ -60,13 +60,13 @@ const LoaderCore = ({
               {index <= value && (
                 <CheckFilled
                   className={cn("text-black dark:text-white", value === index &&
-                    "text-black dark:text-pink-500 opacity-100")} />
+                    "text-black dark:text-black-500 opacity-100")} />
               )}
             </div>
             <span
               className={cn(
                 "text-black dark:text-white",
-                value === index && "text-black dark:text-pink-500 opacity-100"
+                value === index && "text-black dark:text-black-500 opacity-100"
               )}>
               {loadingState.text}
             </span>
@@ -80,7 +80,7 @@ const LoaderCore = ({
 export const MultiStepLoader = ({
   loadingStates,
   loading,
-  duration = 2000,
+  duration = 100,
   loop = true
 }) => {
   const [currentState, setCurrentState] = useState(0);
