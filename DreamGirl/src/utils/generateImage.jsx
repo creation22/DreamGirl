@@ -266,6 +266,16 @@ const GenerateImage = ({ answers, onRestart }) => {
           </div>
         ) : null}
       </div>
+      {/* Google Form Feedback Button - Bottom Right */}
+<a
+  href="https://docs.google.com/forms/d/e/1FAIpQLSdQ4AvyxBcYbj6-LVSrcxuYWGS_RRbPCyR4f976I3cg8JPFAw/viewform?usp=sharing"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="fixed bottom-4 right-4 z-50 bg-gradient-to-r from-green-400 to-teal-500 text-white font-semibold px-5 py-3 rounded-full shadow-xl hover:from-green-500 hover:to-teal-600 transition-all duration-300"
+>
+  ✍️ Submit Feedback
+</a>
+
     </div>
   );
 };
