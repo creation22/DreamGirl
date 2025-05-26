@@ -7,12 +7,14 @@ import { SparklesPreview } from './components/Question'
 
 
 function App() {
-  const [count, setCount] = useState(0)
+
 
   return (
     <>
-    {/* <SparklesPreview/> */}
-    <TypewriterEffectDemo/>
+    <SparklesPreview/>
+    
+  
+    {/* <TypewriterEffectDemo/> */}
     
 
     </>
