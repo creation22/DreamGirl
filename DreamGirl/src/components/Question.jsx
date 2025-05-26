@@ -36,25 +36,29 @@ export function SparklesPreview({ onComplete }) {
   };
 
   const handleFinalSubmit = () => {
-    setShowLoader(true);
+    console.log("Final submit called with answers:", answers);
+    
+    // Transform answers to match the expected format
+    const transformedAnswers = {
+      aura: answers[1],
+      race: answers[2],
+      bodyType: answers[3],
+      skinTone: answers[4],
+      facialStructure: answers[5],
+      outfit: answers[6],
+      hairstyle: answers[7],
+      facialExpression: answers[8],
+      accessories: answers[9],
+      imageGenerationStyle: answers[10]
+    };
+    
+    console.log("Transformed answers:", transformedAnswers);
+    onComplete(transformedAnswers);
+  };
 
-    setTimeout(() => {
-      setShowLoader(false);
-      // Transform answers to match the expected format
-      const transformedAnswers = {
-        aura: answers[1],
-        race: answers[2],
-        bodyType: answers[3],
-        skinTone: answers[4],
-        facialStructure: answers[5],
-        outfit: answers[6],
-        hairstyle: answers[7],
-        facialExpression: answers[8],
-        accessories: answers[9],
-        imageGenerationStyle: answers[10]
-      };
-      onComplete(transformedAnswers);
-    }, 4000); // Sync with loader animation duration
+  const triggerLoader = () => {
+    console.log("Triggering loader...");
+    setShowLoader(true);
   };
 
   return (
@@ -131,6 +135,17 @@ export function SparklesPreview({ onComplete }) {
               className="w-full mt-4 py-2 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Next
+            </button>
+          )}
+          
+          {/* Debug button for final question */}
+          {currentQuestionIndex === questions.length - 1 && !showLoader && (
+            <button
+              onClick={triggerLoader}
+              disabled={selectedAnswer.trim() === ""}
+              className="w-full mt-2 py-2 rounded-full bg-green-400 text-white font-semibold text-sm hover:bg-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Debug: Trigger Loader
             </button>
           )}
         </div>

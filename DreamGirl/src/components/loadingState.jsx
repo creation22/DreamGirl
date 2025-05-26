@@ -15,16 +15,31 @@ const loadingStates = [
 export function MultiStepLoaderDemo({ onClick, disabled, show }) {
   const [loading, setLoading] = useState(false);
 
+  // Handle the show prop from parent
   useEffect(() => {
     if (show) {
       setLoading(true);
+      // Set timeout to call onClick after loader animation
       const timeout = setTimeout(() => {
-        onClick?.(); // Call the final submit handler
         setLoading(false);
-      }, loadingStates.length * 2000);
+        onClick?.();
+      }, loadingStates.length * 2000); // Total duration matches loader
+      
       return () => clearTimeout(timeout);
     }
-  }, [show]);
+  }, [show, onClick]);
+
+  // Handle button click
+  const handleButtonClick = () => {
+    if (!disabled) {
+      setLoading(true);
+      // Call onClick immediately when button is clicked
+      setTimeout(() => {
+        setLoading(false);
+        onClick?.();
+      }, loadingStates.length * 2000);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -34,9 +49,9 @@ export function MultiStepLoaderDemo({ onClick, disabled, show }) {
         duration={2000}
         className="text-pink-300"
       />
-      {!show && (
+      {!show && !loading && (
         <button
-          onClick={() => setLoading(true)}
+          onClick={handleButtonClick}
           disabled={disabled}
           className="w-full mt-4 py-2 rounded-full bg-pink-400 text-white font-semibold text-sm hover:bg-pink-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
