@@ -1,14 +1,14 @@
 export const questions = [
   {
     id: 1,
-    question: "What's the aura of your dream girl?",
+    question: "What's the overall vibe or aura she gives off ?",
     type: "options",
-    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Sexy & Alluring", "Custom"],
+    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Charming & Irresistible", "Custom"],
     allowCustom: true,
   },
   {
     id: 2,
-    question: "What's her race?",
+    question: "What’s her ethnic background?",
     type: "options",
     options: ["Indian", "White/Caucasian", "Black/African", "Asian", "Custom"],
     allowCustom: true,
@@ -29,13 +29,13 @@ export const questions = [
     id: 5,
     question: "How would you describe her facial structure?",
     type: "options",
-    options: ["Oval", "Round", "Square", "Diamond", "Heart Shaped"],
+    options: ["Oval", "Round", "Square", "Diamond", "Angular"],
   },
   {
     id: 6,
     question: "What kind of outfit is she wearing?",
     type: "options",
-    options: ["Elegant", "Casual", "Trendy", "Traditional", "Custom"],
+    options: ["Elegant", "Casual", "Trendy", "Traditional/Cultural", "Custom"],
     allowCustom: true,
   },
   {
@@ -55,7 +55,7 @@ export const questions = [
     id: 9,
     question: "Any accessories?",
     type: "options",
-    options: ["Glasses", "Jewelry", "Piercing/Tattoos", "Custom", "None"],
+    options: ["Glasses", "Jewelry", "Piercing/Tattoos", "Hats/cap", "None"],
     allowCustom: true,
   },
   {
