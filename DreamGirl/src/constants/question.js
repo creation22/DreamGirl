@@ -21,7 +21,7 @@ export const questions = [
   },
   {
     id: 4,
-    question: "What’s her skin tone?",
+    question: "What's her skin tone?",
     type: "options",
     options: ["Fair/Light", "Medium/Olive", "Brown", "Dark", "Tan"],
   },

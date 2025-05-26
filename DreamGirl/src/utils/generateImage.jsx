@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { generatePrompt } from "./generateprompt";
-import { Loader2, AlertTriangle, RotateCcw } from "lucide-react";
+import { Loader2, AlertTriangle, RotateCcw, Download, Share } from "lucide-react";
 import { SparklesCore } from "../components/sparkles";
 
 const GenerateImage = ({ answers, onRestart }) => {
@@ -57,6 +57,31 @@ const GenerateImage = ({ answers, onRestart }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownload = async () => {
+    if (!imageUrl) return;
+    
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'my-dream-girl.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
+  const handleShareToTwitter = () => {
+    const tweetText = "I just created my dream girl using AI! 🥰✨ Check out DreamHer - it's amazing! #DreamHer #AI #DreamGirl";
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    window.open(twitterUrl, '_blank');
   };
 
   return (
@@ -115,6 +140,24 @@ const GenerateImage = ({ answers, onRestart }) => {
                 <p className="font-medium mb-2">Generated from your preferences</p>
                 <p className="italic opacity-75 text-xs">{prompt}</p>
               </div>
+            </div>
+            
+            {/* Social sharing buttons */}
+            <div className="flex gap-2 mt-3 justify-center">
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-1 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors text-xs"
+              >
+                <Download className="w-3 h-3" />
+                Download
+              </button>
+              <button
+                onClick={handleShareToTwitter}
+                className="flex items-center gap-1 px-3 py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-full transition-colors text-xs"
+              >
+                <Share className="w-3 h-3" />
+                Share
+              </button>
             </div>
             
             <div className="flex gap-3 mt-6 justify-center">

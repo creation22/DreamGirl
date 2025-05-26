@@ -53,7 +53,7 @@ export function MultiStepLoaderDemo({ onClick, disabled, show }) {
         <button
           onClick={handleButtonClick}
           disabled={disabled}
-          className="w-full mt-4 py-2 rounded-full bg-pink-400 text-white font-semibold text-sm hover:bg-pink-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full mt-4 py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm hover:from-pink-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           Reveal the Magic ✨
         </button>
