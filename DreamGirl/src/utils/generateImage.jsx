@@ -101,6 +101,30 @@ const GenerateImage = ({ answers, onRestart }) => {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-pink-900 via-purple-900 to-black">
+      {/* Star this Repo - Top Left */}
+      <div className="absolute top-4 left-4 z-20">
+        <a
+          href="https://github.com/creation22/DreamGirl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-full shadow-lg transition-all duration-300"
+        >
+          ⭐ Star this Repo
+        </a>
+      </div>
+
+      {/* Buy Me a Coffee - Top Right */}
+      <div className="absolute top-4 right-4 z-20">
+        <a
+          href="https://buymeacoffee.com/creation22"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-full shadow-lg transition-all duration-300"
+        >
+          ☕ Buy Me a Coffee
+        </a>
+      </div>
+
       {/* Enhanced Sparkles Background */}
       <div className="absolute inset-0 z-0">
         <SparklesCore
