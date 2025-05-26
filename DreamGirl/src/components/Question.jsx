@@ -4,7 +4,7 @@ import { SparklesCore } from "./sparkles";
 import { questions } from "../constants/question";
 import { MultiStepLoaderDemo } from "./loadingState";
 
-export function SparklesPreview() {
+export function SparklesPreview({ onComplete }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [showLoader, setShowLoader] = useState(false);
@@ -40,8 +40,20 @@ export function SparklesPreview() {
 
     setTimeout(() => {
       setShowLoader(false);
-      console.log("All answers:", answers);
-      // TODO: handle final action here
+      // Transform answers to match the expected format
+      const transformedAnswers = {
+        aura: answers[1],
+        race: answers[2],
+        bodyType: answers[3],
+        skinTone: answers[4],
+        facialStructure: answers[5],
+        outfit: answers[6],
+        hairstyle: answers[7],
+        facialExpression: answers[8],
+        accessories: answers[9],
+        imageGenerationStyle: answers[10]
+      };
+      onComplete(transformedAnswers);
     }, 4000); // Sync with loader animation duration
   };
 
@@ -76,7 +88,7 @@ export function SparklesPreview() {
 
         <div className="space-y-3">
           {currentQuestion.options.map((option, idx) => {
-            if (idx === textareaIndex) {
+            if (idx === textareaIndex && currentQuestion.allowCustom) {
               return (
                 <textarea
                   key={idx}

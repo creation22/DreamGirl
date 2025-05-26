@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { generatePrompt } from "./generateprompt";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, RotateCcw } from "lucide-react";
 import { SparklesCore } from "../components/sparkles";
 
-const GenerateImage = () => {
+const GenerateImage = ({ answers, onRestart }) => {
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,12 @@ const GenerateImage = () => {
 
   useEffect(() => {
     const fetchImage = async () => {
-      const newPrompt = generatePrompt();
+      if (!answers || Object.keys(answers).length === 0) {
+        setError("No answers provided.");
+        return;
+      }
+
+      const newPrompt = generatePrompt(answers);
       if (!newPrompt) {
         setError("Prompt generation failed.");
         return;
@@ -23,7 +28,7 @@ const GenerateImage = () => {
       setError("");
 
       try {
-        const imageLink = `https://image.pollinations.ai/prompt/${encodeURIComponent(newPrompt)}`;
+        const imageLink = `https://image.pollinations.ai/prompt/${encodeURIComponent(newPrompt)}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 1000000)}`;
         setImageUrl(imageLink);
       } catch (err) {
         console.error(err);
@@ -34,10 +39,28 @@ const GenerateImage = () => {
     };
 
     fetchImage();
-  }, []);
+  }, [answers]);
+
+  const handleRegenerate = () => {
+    setImageUrl("");
+    setError("");
+    const newPrompt = generatePrompt(answers);
+    setPrompt(newPrompt);
+    setLoading(true);
+    
+    try {
+      const imageLink = `https://image.pollinations.ai/prompt/${encodeURIComponent(newPrompt)}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 1000000)}`;
+      setImageUrl(imageLink);
+    } catch (err) {
+      console.error(err);
+      setError("Image generation failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-pink-900 via-purple-900 to-black">
       {/* Sparkles Background */}
       <div className="absolute inset-0 z-0">
         <SparklesCore
@@ -45,7 +68,7 @@ const GenerateImage = () => {
           background="transparent"
           minSize={0.6}
           maxSize={1.4}
-          particleDensity={500}
+          particleDensity={300}
           className="w-full h-full"
           particleColor="#FFC0CB"
         />
@@ -53,32 +76,61 @@ const GenerateImage = () => {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-4 py-8">
-        <h1 className="text-3xl md:text-5xl font-bold text-pink-700 mb-4 drop-shadow-lg">
+        <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
           Your Dream Girl ✨
         </h1>
 
         <p className="text-pink-200 text-sm mb-6 max-w-md drop-shadow-md">
-          Generated based on your personality preferences. AI imagined this using your answers!
+          Generated based on your preferences. AI imagined this using your answers!
         </p>
 
         {loading ? (
-          <div className="flex items-center justify-center mt-10 animate-pulse">
-            <Loader2 className="w-10 h-10 text-pink-200 animate-spin" />
+          <div className="flex flex-col items-center justify-center mt-10">
+            <Loader2 className="w-12 h-12 text-pink-300 animate-spin mb-4" />
+            <p className="text-pink-200 text-sm">Creating your dream girl...</p>
           </div>
         ) : error ? (
-          <div className="text-red-300 flex items-center gap-2 mt-6">
-            <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+          <div className="text-red-300 flex flex-col items-center gap-4 mt-6">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={handleRegenerate}
+              className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         ) : imageUrl ? (
-          <div className="mt-4 max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-pink-300 backdrop-blur-md">
-            <img
-              src={imageUrl}
-              alt="AI generated dream girl"
-              className="w-full h-auto object-cover"
-            />
-            <div className="p-4 bg-white/70 text-pink-700 text-xs font-medium">
-              Prompt used: <span className="italic">{prompt}</span>
+          <div className="mt-4 max-w-md w-full">
+            <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-pink-300 backdrop-blur-md bg-white/10">
+              <img
+                src={imageUrl}
+                alt="AI generated dream girl"
+                className="w-full h-auto object-cover"
+                onError={() => setError("Failed to load image")}
+              />
+              <div className="p-4 bg-black/50 text-pink-100 text-xs">
+                <p className="font-medium mb-2">Generated from your preferences</p>
+                <p className="italic opacity-75 text-xs">{prompt}</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6 justify-center">
+              <button
+                onClick={handleRegenerate}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-full transition-colors text-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Regenerate
+              </button>
+              <button
+                onClick={onRestart}
+                className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full transition-colors text-sm"
+              >
+                Start Over
+              </button>
             </div>
           </div>
         ) : null}
