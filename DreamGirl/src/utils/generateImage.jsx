@@ -1,7 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import {
+  Loader2,
+  AlertTriangle,
+  RotateCcw,
+  Download,
+  Twitter,
+  Star,
+  Coffee
+} from "lucide-react";
 import { generatePrompt } from "./generateprompt";
-import { Loader2, AlertTriangle, RotateCcw, Download, Share } from "lucide-react";
 import { SparklesCore } from "../components/sparkles";
 
 const GenerateImage = ({ answers, onRestart }) => {
@@ -47,7 +55,7 @@ const GenerateImage = ({ answers, onRestart }) => {
     const newPrompt = generatePrompt(answers);
     setPrompt(newPrompt);
     setLoading(true);
-    
+
     try {
       const imageLink = `https://image.pollinations.ai/prompt/${encodeURIComponent(newPrompt)}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 1000000)}`;
       setImageUrl(imageLink);
@@ -61,27 +69,26 @@ const GenerateImage = ({ answers, onRestart }) => {
 
   const handleDownload = async () => {
     if (!imageUrl) return;
-    
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = 'my-dream-girl.png';
+      link.download = "my-dream-girl.png";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error("Download failed:", error);
     }
   };
 
   const handleShareToTwitter = () => {
-    const tweetText = "I just created my dream girl using AI! 🥰✨ Check out DreamHer - it's amazing! #DreamHer #AI #DreamGirl";
+    const tweetText = "I just created my dream girl using DreamHer! 🥰✨ Check out DreamHer - it's amazing! #DreamHer #AI #DreamGirl @_Creation22";
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-    window.open(twitterUrl, '_blank');
+    window.open(twitterUrl, "_blank");
   };
 
   return (
@@ -97,6 +104,30 @@ const GenerateImage = ({ answers, onRestart }) => {
           className="w-full h-full"
           particleColor="#FFC0CB"
         />
+      </div>
+
+      {/* Top corner links */}
+      <div className="absolute top-4 left-4 z-20">
+        <a
+          href="https://github.com/creation22/DreamGirl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-white hover:text-yellow-300 text-sm"
+        >
+          <Star className="w-4 h-4" />
+          Star this repo
+        </a>
+      </div>
+      <div className="absolute top-4 right-4 z-20">
+        <a
+          href="https://buymeacoffee.com/creation22"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-white hover:text-yellow-200 text-sm"
+        >
+          <Coffee className="w-4 h-4" />
+          Buy me a coffee
+        </a>
       </div>
 
       {/* Content */}
@@ -141,7 +172,7 @@ const GenerateImage = ({ answers, onRestart }) => {
                 <p className="italic opacity-75 text-xs">{prompt}</p>
               </div>
             </div>
-            
+
             {/* Social sharing buttons */}
             <div className="flex gap-2 mt-3 justify-center">
               <button
@@ -155,11 +186,11 @@ const GenerateImage = ({ answers, onRestart }) => {
                 onClick={handleShareToTwitter}
                 className="flex items-center gap-1 px-3 py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-full transition-colors text-xs"
               >
-                <Share className="w-3 h-3" />
-                Share
+                <Twitter className="w-3 h-3" />
+                Twitter
               </button>
             </div>
-            
+
             <div className="flex gap-3 mt-6 justify-center">
               <button
                 onClick={handleRegenerate}

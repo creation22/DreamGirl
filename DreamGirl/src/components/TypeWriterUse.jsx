@@ -18,7 +18,7 @@ const words = [
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-pink-500 to-black">
-      <p className="text-neutral-600 dark:text-neutral-200 text-2xl mb-10 font-extralight">
+      <p className=" text-white text-3xl mb-10 font-pacifico drop-shadow-md text-center">
         Describe Her. We'll Draw Her 🥰
       </p>
       <TypewriterEffect words={words} />
