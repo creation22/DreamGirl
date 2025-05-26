@@ -2,17 +2,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SparklesCore } from "./sparkles";
 import { questions } from "../constants/question";
+import { MultiStepLoaderDemo } from "./loadingState";
 
 export function SparklesPreview() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [showLoader, setShowLoader] = useState(false);
   const textareaRef = useRef(null);
 
   const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestion.id] || "";
-
-  const optionsCount = currentQuestion.options.length;
-  const textareaIndex = 4; // 5th option replaced by textarea
+  const textareaIndex = 4;
 
   const handleOptionSelect = (option) => {
     setAnswers({ ...answers, [currentQuestion.id]: option });
@@ -22,7 +22,6 @@ export function SparklesPreview() {
     setAnswers({ ...answers, [currentQuestion.id]: e.target.value });
   };
 
-  // Auto resize textarea height based on content
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -33,9 +32,17 @@ export function SparklesPreview() {
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
-    } else {
-      console.log("All answers:", answers);
     }
+  };
+
+  const handleFinalSubmit = () => {
+    setShowLoader(true);
+
+    setTimeout(() => {
+      setShowLoader(false);
+      console.log("All answers:", answers);
+      // TODO: handle final action here
+    }, 4000); // Sync with loader animation duration
   };
 
   return (
@@ -70,7 +77,6 @@ export function SparklesPreview() {
         <div className="space-y-3">
           {currentQuestion.options.map((option, idx) => {
             if (idx === textareaIndex) {
-              // textarea instead of 5th option
               return (
                 <textarea
                   key={idx}
@@ -99,13 +105,23 @@ export function SparklesPreview() {
           })}
         </div>
 
-        <button
-          onClick={handleNext}
-          disabled={selectedAnswer.trim() === ""}
-          className="w-full mt-6 py-2 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
+        <div className="mt-6">
+          {currentQuestionIndex === questions.length - 1 ? (
+            <MultiStepLoaderDemo
+              onClick={handleFinalSubmit}
+              disabled={selectedAnswer.trim() === ""}
+              show={showLoader}
+            />
+          ) : (
+            <button
+              onClick={handleNext}
+              disabled={selectedAnswer.trim() === ""}
+              className="w-full mt-4 py-2 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
