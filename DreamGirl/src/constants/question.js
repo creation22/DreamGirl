@@ -62,6 +62,6 @@ export const questions = [
     id: 10,
     question: "Choose an image generation style",
     type: "options",
-    options: ["Anime", "3D Render", "Semi-Realistic", "Cartoon", "Realistic"],
+    options: ["Anime", "3D Render", "Semi-Realistic", "Cartoon", "Fantasy"],
   },
 ];
