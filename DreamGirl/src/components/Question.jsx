@@ -38,7 +38,7 @@ export function SparklesPreview({ onComplete }) {
   const handleFinalSubmit = () => {
     console.log("Final submit called with answers:", answers);
     
-    // Transform answers to match the expected format
+    
     const transformedAnswers = {
       aura: answers[1],
       race: answers[2],

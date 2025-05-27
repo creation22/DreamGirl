@@ -15,11 +15,11 @@ const loadingStates = [
 export function MultiStepLoaderDemo({ onClick, disabled, show }) {
   const [loading, setLoading] = useState(false);
 
-  // Handle the show prop from parent
+
   useEffect(() => {
     if (show) {
       setLoading(true);
-      // Set timeout to call onClick after loader animation
+      
       const timeout = setTimeout(() => {
         setLoading(false);
         onClick?.();
@@ -29,11 +29,11 @@ export function MultiStepLoaderDemo({ onClick, disabled, show }) {
     }
   }, [show, onClick]);
 
-  // Handle button click
+  
   const handleButtonClick = () => {
     if (!disabled) {
       setLoading(true);
-      // Call onClick immediately when button is clicked
+      
       setTimeout(() => {
         setLoading(false);
         onClick?.();
