@@ -139,7 +139,7 @@ const GenerateImage = ({ answers, onRestart }) => {
         />
       </div>
 
-      {/* Content - Mobile Responsive */}
+    
       <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-3 py-16 sm:px-4 sm:py-8">
         <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
           <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-pink-300" />

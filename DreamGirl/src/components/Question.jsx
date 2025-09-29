@@ -1,8 +1,11 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useDeferredValue } from "react";
 import { SparklesCore } from "./sparkles";
 import { questions } from "../constants/question";
 import { MultiStepLoaderDemo } from "./loadingState";
+
+// Memoize background once at module scope so it doesn't remount on parent re-renders
+const MemoSparklesCore = React.memo(SparklesCore);
 
 export function SparklesPreview({ onComplete }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -14,28 +17,47 @@ export function SparklesPreview({ onComplete }) {
   const selectedAnswer = answers[currentQuestion.id] || "";
   const textareaIndex = 4;
 
-  const handleOptionSelect = (option) => {
-    setAnswers({ ...answers, [currentQuestion.id]: option });
-  };
+  // Local draft state for textarea to avoid re-rendering on every keystroke at parent level
+  const [draft, setDraft] = useState("");
+  const deferredDraft = useDeferredValue(draft);
 
-  const handleTextareaChange = (e) => {
-    setAnswers({ ...answers, [currentQuestion.id]: e.target.value });
-  };
+  // Keep draft in sync when question changes
+  useEffect(() => {
+    setDraft(selectedAnswer);
+  }, [currentQuestionIndex]);
+
+  const handleOptionSelect = useCallback((option) => {
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option }));
+  }, [currentQuestion.id]);
+
+  const handleTextareaChange = useCallback((e) => {
+    setDraft(e.target.value);
+  }, []);
+
+  // Debounce committing textarea draft into the answers object
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if ((answers[currentQuestion.id] || "") !== deferredDraft) {
+        setAnswers((prev) => ({ ...prev, [currentQuestion.id]: deferredDraft }));
+      }
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [deferredDraft, currentQuestion.id]);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  }, [selectedAnswer]);
+  }, [draft]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     }
-  };
+  }, [currentQuestionIndex]);
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = useCallback(() => {
     console.log("Final submit called with answers:", answers);
     
     
@@ -54,12 +76,12 @@ export function SparklesPreview({ onComplete }) {
     
     console.log("Transformed answers:", transformedAnswers);
     onComplete(transformedAnswers);
-  };
+  }, [answers, onComplete]);
 
   return (
     <div className="min-h-screen relative w-full bg-gradient-to-br from-pink-900 via-purple-900 to-black flex flex-col items-center justify-center overflow-hidden rounded-md px-4 py-6 md:py-12">
   <div className="w-full absolute inset-0 h-full">
-    <SparklesCore
+    <MemoSparklesCore
       id="tsparticlesfullpage"
       background="transparent"
       minSize={0.6}
@@ -93,7 +115,7 @@ export function SparklesPreview({ onComplete }) {
               key={idx}
               ref={textareaRef}
               placeholder="Add your own answer here..."
-              value={selectedAnswer}
+              value={draft}
               onChange={handleTextareaChange}
               className="w-full px-4 py-3 mt-2 rounded-xl text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50 resize-none min-h-[48px] bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300"
             />
