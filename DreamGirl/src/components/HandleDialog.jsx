@@ -4,11 +4,12 @@ import { normalizeHandle } from "../utils/moderation";
 import { setHandle } from "../lib/me";
 
 /**
- * Asks for the visitor's X username. Native <dialog> handles focus.
- * `required`: the first ask, before entering the app. No close button, Escape does nothing.
+ * Asks for the visitor's X username. Native <dialog> handles focus and Escape.
+ * `starting`: asked from "Describe her". Saving starts the questions; closing stays on
+ * the page, since the questions can't start without a name.
  * Otherwise it's changing the name, and closing just cancels.
  */
-export default function HandleDialog({ open, onClose, initial = "", required = false }) {
+export default function HandleDialog({ open, onClose, initial = "", starting = false }) {
   const ref = useRef(null);
   const inputRef = useRef(null);
   const inputId = useId();
@@ -44,29 +45,27 @@ export default function HandleDialog({ open, onClose, initial = "", required = f
       ref={ref}
       onCancel={(e) => {
         e.preventDefault();
-        if (!required) onClose();
+        onClose();
       }}
       aria-labelledby={`${inputId}-title`}
       className="w-[min(92vw,460px)] rounded-2xl border-3 border-ink bg-white p-0 text-ink shadow-nb-lg backdrop:bg-ink/60 backdrop:backdrop-blur-[2px]"
     >
       <form onSubmit={save} className="relative p-6 sm:p-8">
-        {!required && (
-          <button
-            type="button"
-            onClick={() => onClose()}
-            aria-label="Close"
-            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg border-3 border-ink bg-white hover:bg-pink-wash"
-          >
-            <X className="h-4 w-4" strokeWidth={3} />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => onClose()}
+          aria-label="Close"
+          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg border-3 border-ink bg-white hover:bg-pink-wash"
+        >
+          <X className="h-4 w-4" strokeWidth={3} />
+        </button>
         <h2 id={`${inputId}-title`} className="pr-10 font-display text-2xl leading-tight sm:text-3xl">
-          {required ? "First, who's dreaming?" : "Change your X username"}
+          {starting ? "First, who's dreaming?" : initial ? "Change your X username" : "What's your X username?"}
         </h2>
         <p className="mt-3 leading-relaxed text-neutral-700">
-          {required
+          {starting
             ? "Enter your X username to start. Every portrait you make is posted to the public gallery under this name."
-            : "Your next portraits are posted to the public gallery under the new name."}
+            : "Every portrait you make is posted to the public gallery under this name."}
         </p>
 
         <label htmlFor={inputId} className="mt-6 block text-sm font-bold">
@@ -101,7 +100,7 @@ export default function HandleDialog({ open, onClose, initial = "", required = f
         )}
 
         <button type="submit" className="nb-btn-pink mt-7 w-full sm:w-auto">
-          {required ? "Let me in" : "Save username"}
+          {starting ? "Start describing her" : "Save username"}
         </button>
       </form>
     </dialog>

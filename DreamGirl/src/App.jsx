@@ -16,6 +16,8 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   // Changing the username later, from the @ chip.
   const [dialogOpen, setDialogOpen] = useState(false);
+  // "Describe her" without a username: ask for it first, then start.
+  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -23,11 +25,23 @@ export default function App() {
 
   const openDialog = useCallback(() => setDialogOpen(true), []);
 
-  const start = useCallback(() => {
+  const begin = useCallback(() => {
     setAnswers({});
     setPage("quiz");
     navigate("/");
   }, []);
+
+  // The landing page and gallery are open to everyone; the questions need an X username.
+  const start = useCallback(() => {
+    if (handle) begin();
+    else setAsking(true);
+  }, [handle, begin]);
+
+  const closeDialog = (saved) => {
+    if (asking && saved) begin();
+    setAsking(false);
+    setDialogOpen(false);
+  };
 
   const home = () => {
     setAnswers({});
@@ -35,22 +49,21 @@ export default function App() {
   };
 
   const atHome = route.name === "home";
-  // The site is entered with a username. Shared gallery links stay open to everyone,
-  // so a friend can see your portraits first; "Make yours" brings them here.
-  const gate = atHome && !handle;
+  // Belt and braces: no username, no questions.
+  const inApp = atHome && page !== "landing" && !!handle;
 
   return (
     <HandleDialogContext.Provider value={openDialog}>
       <Analytics />
       {/* The result stays mounted (hidden) while browsing the gallery, so coming back
           doesn't start a new drawing or post the portrait twice. */}
-      {page === "result" && (
+      {page === "result" && handle && (
         <div hidden={!atHome}>
           <Result answers={answers} handle={handle} onEdit={() => setPage("quiz")} onRestart={home} />
         </div>
       )}
-      {atHome && page === "landing" && <Landing onStart={start} />}
-      {atHome && page === "quiz" && (
+      {atHome && !inApp && <Landing onStart={start} />}
+      {inApp && page === "quiz" && (
         <Quiz
           initialAnswers={answers}
           onExit={() => setPage("landing")}
@@ -62,7 +75,7 @@ export default function App() {
       )}
       {route.name === "gallery" && <Gallery onStart={start} />}
       {route.name === "user" && <Gallery key={route.handle} handle={route.handle} onStart={start} />}
-      <HandleDialog open={gate || dialogOpen} required={gate} initial={handle || ""} onClose={() => setDialogOpen(false)} />
+      <HandleDialog open={asking || dialogOpen} starting={asking} initial={handle || ""} onClose={closeDialog} />
     </HandleDialogContext.Provider>
   );
 }
