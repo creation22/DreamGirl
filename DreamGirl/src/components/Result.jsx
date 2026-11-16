@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
+import { Coffee, Download, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
 import { Header, Photo } from "./Chrome";
+import PriceTag from "./PriceTag";
 import { LINKS } from "../constants/links";
 import { NIGHT } from "../constants/night";
 import { captionFor } from "../constants/question";
@@ -54,6 +55,27 @@ function Receipt({ receipt }) {
           Get these prices for your app
         </a>
       </p>
+    </div>
+  );
+}
+
+/** Asks for support right after the receipt, when the cost of a portrait is fresh in mind. */
+function Support({ costMicro }) {
+  // "$1 pays for about 250 more portraits", from what this one actually cost.
+  const perDollar = costMicro > 0 ? Math.floor(1e6 / costMicro / 10) * 10 : 0;
+  return (
+    <div className="nb-card mt-6 flex flex-col gap-4 bg-pink p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="font-display text-xl leading-tight">Keep DreamHer running</p>
+        <p className="mt-1 text-sm font-medium leading-relaxed">
+          It's free for everyone, but every portrait is paid for.
+          {perDollar > 0 && <> Each $1 pays for about {perDollar.toLocaleString("en-US")} more.</>}
+        </p>
+      </div>
+      <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className="nb-btn-white shrink-0">
+        <Coffee className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+        Support this project
+      </a>
     </div>
   );
 }
@@ -134,6 +156,9 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
                 className="h-full w-full animate-develop object-cover"
               />
             )}
+            {status === "ready" && data?.receipt && (
+              <PriceTag large costMicro={data.receipt.costMicro} listMicro={data.receipt.listMicro} className="absolute left-3 top-3 animate-rise" />
+            )}
             {loading && (
               <div className="relative h-full w-full bg-ink" role="status">
                 <img src={NIGHT.glow} alt="" className="h-full w-full animate-pulse object-cover object-[50%_30%] [animation-duration:2.6s]" />
@@ -201,6 +226,8 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
           )}
 
           {status === "ready" && data?.receipt && <Receipt receipt={data.receipt} />}
+
+          {status === "ready" && <Support costMicro={data?.receipt?.costMicro} />}
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <button type="button" onClick={onEdit} className={link}>

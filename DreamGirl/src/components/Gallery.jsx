@@ -4,7 +4,8 @@ import { Header } from "./Chrome";
 import { listPortraits, reportPortrait } from "../lib/api";
 import { Link, navigate, userPath } from "../lib/router";
 import { normalizeHandle } from "../utils/moderation";
-import { SURPLUS_URL, usd } from "../utils/money";
+import { usd } from "../utils/money";
+import PriceTag from "./PriceTag";
 import { useSurplusStats } from "./SurplusStats";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
@@ -63,14 +64,7 @@ function PortraitCard({ item, showUser }) {
             className="h-full w-full object-cover"
           />
         )}
-        {item.costMicro > 0 && (
-          <span
-            className="absolute left-2 top-2 rounded-md border-3 border-ink bg-white px-1.5 py-0.5 text-xs font-bold tabular-nums shadow-nb-sm"
-            title={`Cost to draw on Surplus Intelligence${item.listMicro ? ` (list price ${usd(item.listMicro)})` : ""}`}
-          >
-            {usd(item.costMicro)}
-          </span>
-        )}
+        <PriceTag costMicro={item.costMicro} listMicro={item.listMicro} className="absolute left-2 top-2" />
       </div>
       <div className="flex flex-1 flex-col gap-2 bg-pink-soft px-3 py-2.5">
         <p className="text-xs font-semibold leading-snug sm:text-sm">{item.caption}</p>
@@ -223,11 +217,7 @@ export default function Gallery({ handle: rawHandle, onStart }) {
                 <h1 className="font-display text-[clamp(2.2rem,7vw,3.5rem)] leading-[1.05]">Public gallery</h1>
                 <p className="mt-3 max-w-xl text-lg text-neutral-700">
                   Every portrait drawn on DreamHer, newest first, with the X username of who made it.
-                  The tag on each one is what it cost to draw on{" "}
-                  <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink underline decoration-2 underline-offset-4 hover:text-pink-deep">
-                    Surplus Intelligence
-                  </a>
-                  .
+                  The tag on each one is what it cost to draw.
                 </p>
                 {stats && (
                   <p className="mt-4 inline-block rounded-lg border-3 border-ink bg-pink-soft px-3 py-1.5 text-sm font-bold shadow-nb-sm">
