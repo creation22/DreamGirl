@@ -1,69 +1,53 @@
-import { createContext, useContext } from "react";
-import { AtSign, Coffee, Images, Star } from "lucide-react";
+import { useContext } from "react";
 import { Link } from "../lib/router";
 import { useHandle } from "../lib/me";
+import { HandleDialogContext } from "../lib/dialog";
 import { LINKS } from "../constants/links";
+import { NIGHT } from "../constants/night";
+import { SURPLUS_URL } from "../utils/money";
 
-const HEART =
-  "M254.791,33.251c-46.555,0-76.089,51.899-83.079,51.899c-6.111,0-34.438-51.899-83.082-51.899c-47.314,0-85.947,39.021-88.476,86.27c-1.426,26.691,7.177,47.001,19.304,65.402c24.222,36.76,130.137,125.248,152.409,125.248c22.753,0,127.713-88.17,152.095-125.247c12.154-18.483,20.731-38.711,19.304-65.402C340.738,72.272,302.107,33.251,254.791,33.251";
+export function Wordmark({ className = "" }) {
+  return <span className={`font-display font-medium italic tracking-[-0.02em] ${className}`}>DreamHer</span>;
+}
 
-export function Heart({ className = "" }) {
+/** The photograph, blurred and darkened, fixed behind every page except the landing page. */
+export function Backdrop() {
   return (
-    <svg viewBox="-14 -14 371 371" className={className} aria-hidden>
-      <path d={HEART} fill="#FF5FA2" stroke="#000" strokeWidth="26" strokeLinejoin="round" />
-    </svg>
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+      <img src={NIGHT.blur} alt="" className="h-full w-full object-cover object-[62%_50%] opacity-70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-void/80 via-void/70 to-void" />
+    </div>
   );
 }
 
-export function Logo() {
-  return (
-    <Link to="/" className="flex items-center gap-2" aria-label="DreamHer home">
-      <Heart className="h-8 w-8" />
-      <span className="font-display text-xl tracking-tight">DreamHer</span>
-    </Link>
-  );
-}
-
-export const chipBtn =
-  "flex items-center gap-1.5 rounded-lg border-3 border-ink bg-white px-3 py-1.5 text-sm font-semibold shadow-nb-sm transition-[transform,box-shadow] duration-100 hover:-translate-x-px hover:-translate-y-px hover:shadow-nb active:translate-x-0.5 active:translate-y-0.5 active:shadow-none";
-
-/** Opens the username dialog; provided by App. */
-export const HandleDialogContext = createContext(() => {});
-
-function HandleChip() {
+function HandleButton() {
   const handle = useHandle();
   const openDialog = useContext(HandleDialogContext);
   return (
-    <button type="button" onClick={openDialog} className={`${chipBtn} max-w-[9.5rem] !bg-pink-soft`} title="Change your X username">
-      <AtSign className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />
-      <span className="truncate">{handle || "Add your X"}</span>
+    <button
+      type="button"
+      onClick={openDialog}
+      title="Change your X username"
+      className="max-w-[9rem] truncate rounded-full px-3 py-2 text-sm text-fog transition-colors hover:text-light"
+    >
+      {handle ? `@${handle}` : "Add your X"}
     </button>
   );
 }
 
-export function Header({ onHome, children }) {
+export function Header({ onHome, children, transparent = false }) {
   return (
-    <header className="border-b-3 border-ink bg-white">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <Link to="/" onClick={onHome} className="flex shrink-0 items-center gap-2" aria-label="DreamHer home">
-          <Heart className="h-8 w-8" />
-          <span className="hidden font-display text-xl tracking-tight min-[400px]:inline">DreamHer</span>
+    <header className={transparent ? "relative z-10" : "relative z-10 border-b border-white/[0.07]"}>
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5 sm:px-10">
+        <Link to="/" onClick={onHome} aria-label="DreamHer home" className="shrink-0 text-[26px] leading-none text-light transition-opacity hover:opacity-80">
+          <Wordmark />
         </Link>
         {children ?? (
-          <nav className="flex min-w-0 items-center gap-2 sm:gap-3" aria-label="Main">
-            <Link to="/gallery" className={chipBtn}>
-              <Images className="h-4 w-4" aria-hidden />
+          <nav className="flex min-w-0 items-center gap-1 sm:gap-3" aria-label="Main">
+            <Link to="/gallery" className="rounded-full px-3 py-2 text-sm text-fog transition-colors hover:text-light">
               Gallery
             </Link>
-            <HandleChip />
-            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden md:flex`}>
-              <Star className="h-4 w-4" aria-hidden />
-              Star on GitHub
-            </a>
-            <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden lg:flex`}>
-              <Coffee className="h-4 w-4" aria-hidden />
-              Buy me a coffee
-            </a>
+            <HandleButton />
           </nav>
         )}
       </div>
@@ -71,14 +55,27 @@ export function Header({ onHome, children }) {
   );
 }
 
-/** A portrait card: square picture over a caption strip, in a thick black frame. */
-export function Photo({ children, caption, className = "", shadow = "shadow-nb", style }) {
+export function Footer() {
   return (
-    <figure className={`overflow-hidden rounded-xl border-3 border-ink bg-white ${shadow} ${className}`} style={style}>
-      <div className="relative aspect-square overflow-hidden border-b-3 border-ink bg-pink-wash">{children}</div>
-      {caption && (
-        <figcaption className="bg-pink-soft px-2.5 py-2 text-xs font-semibold leading-snug sm:px-3 sm:text-sm">{caption}</figcaption>
-      )}
-    </figure>
+    <footer className="border-t border-white/[0.07]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-fog sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <p>
+          Brought to life by{" "}
+          <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="text-link">
+            Surplus Intelligence
+          </a>
+          . Made by{" "}
+          <a href="https://github.com/creation22" target="_blank" rel="noopener noreferrer" className="text-link">
+            creation22
+          </a>
+          .
+        </p>
+        <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
+          <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="hover:text-light">GitHub</a>
+          <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className="hover:text-light">Buy me a coffee</a>
+          <a href={LINKS.feedback} target="_blank" rel="noopener noreferrer" className="hover:text-light">Send feedback</a>
+        </nav>
+      </div>
+    </footer>
   );
 }

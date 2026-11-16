@@ -5,7 +5,7 @@ import Quiz from "./components/Quiz";
 import Result from "./components/Result";
 import Gallery from "./components/Gallery";
 import HandleDialog from "./components/HandleDialog";
-import { HandleDialogContext } from "./components/Chrome";
+import { HandleDialogContext } from "./lib/dialog";
 import { matchRoute, navigate, usePath } from "./lib/router";
 import { useHandle, wasAsked } from "./lib/me";
 

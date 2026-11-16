@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, Check, PenLine } from "lucide-react";
-import { Header } from "./Chrome";
+import { AlertCircle, ArrowLeft, Check, PenLine } from "lucide-react";
+import { Backdrop, Header } from "./Chrome";
 import { questions } from "../constants/question";
+import { NIGHT } from "../constants/night";
 import { checkText } from "../utils/moderation";
 
 const EASE_OUT = [0.22, 1, 0.36, 1];
@@ -99,46 +100,41 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const progress = questions.filter((item) => answers[item.key]?.trim()).length;
+  const known = questions.map((item) => answers[item.key]?.trim()).filter(Boolean);
 
   return (
     <div className="flex min-h-[100svh] flex-col">
+      <Backdrop />
       <Header onHome={onExit}>
-        <p className="rounded-full border-3 border-ink bg-pink-soft px-3 py-1 text-sm font-bold" aria-live="polite">
-          Question {index + 1} of {questions.length}
+        <p className="text-sm tabular-nums text-fog" aria-live="polite">
+          {index + 1} of {questions.length}
         </p>
       </Header>
 
-      {/* progress: one cell per question */}
-      <div className="mx-auto w-full max-w-6xl px-4 pt-6 sm:px-6" aria-hidden>
-        <div className="flex h-4 overflow-hidden rounded-full border-3 border-ink bg-white">
-          {questions.map((item, n) => (
-            <span
-              key={item.key}
-              className={`flex-1 transition-colors duration-200 [&:not(:last-child)]:border-r-3 [&:not(:last-child)]:border-ink ${
-                n < index || (n === index && answered) ? "bg-pink" : n === index ? "bg-pink-soft" : "bg-white"
-              }`}
-            />
-          ))}
-        </div>
+      {/* progress: a thin line of light */}
+      <div className="h-px w-full bg-white/10" aria-hidden>
+        <div
+          className="h-full bg-light shadow-glow transition-[width] duration-700 ease-out"
+          style={{ width: `${((index + (answered ? 1 : 0)) / questions.length) * 100}%` }}
+        />
       </div>
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-12 px-4 pb-10 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[1fr_300px] lg:gap-16">
+      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-16 px-5 pb-10 pt-12 sm:px-10 sm:pt-16 lg:grid-cols-[1fr_340px] lg:gap-24">
         <div className="flex flex-col">
           <AnimatePresence mode="wait" initial={false} custom={direction}>
             <MotionDiv
               key={q.key}
               custom={direction}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, x: 24 * direction }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, x: -24 * direction }}
-              transition={{ duration: 0.2, ease: EASE_OUT }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 * direction, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 * direction, filter: "blur(6px)" }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
             >
-              <h1 id="question" className="max-w-2xl font-display text-[clamp(2rem,7vw,3.25rem)] leading-[1.08]">
+              <h1 id="question" className="max-w-2xl font-display text-[clamp(2.3rem,5.6vw,4.25rem)] font-normal leading-[1.02] tracking-[-0.02em] text-light">
                 {q.question}
               </h1>
 
-              <div role="radiogroup" aria-labelledby="question" className="mt-9 grid gap-4 sm:grid-cols-2">
+              <div role="radiogroup" aria-labelledby="question" className="mt-12 grid gap-3 sm:grid-cols-2">
                 {q.options.map((option, n) => {
                   const selected = value === option && !showCustom;
                   return (
@@ -148,21 +144,16 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                       role="radio"
                       aria-checked={selected}
                       onClick={() => choose(option)}
-                      className={`flex items-center gap-4 rounded-xl border-3 border-ink px-4 py-4 text-left text-lg font-semibold transition-[transform,box-shadow,background-color] duration-100 ease-out ${
+                      className={`flex items-center justify-between gap-4 rounded-2xl border px-5 py-[18px] text-left text-[17px] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.985] ${
                         selected
-                          ? "translate-x-1 translate-y-1 bg-pink shadow-none"
-                          : "bg-white shadow-nb hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-pink-wash hover:shadow-nb-hover active:translate-x-1 active:translate-y-1 active:shadow-none"
+                          ? "border-light bg-light text-void shadow-glow"
+                          : "border-white/[0.12] bg-white/[0.03] text-mist hover:border-white/45 hover:text-light"
                       }`}
                     >
-                      <span
-                        aria-hidden
-                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-3 border-ink text-sm font-bold ${
-                          selected ? "bg-white" : "bg-pink-soft"
-                        }`}
-                      >
-                        {selected ? <Check className="h-4 w-4" strokeWidth={3.5} /> : n + 1}
+                      <span>{option}</span>
+                      <span aria-hidden className={`text-xs tabular-nums ${selected ? "text-void/60" : "text-fog/70"}`}>
+                        {selected ? <Check className="h-4 w-4" strokeWidth={2.5} /> : n + 1}
                       </span>
-                      {option}
                     </button>
                   );
                 })}
@@ -173,22 +164,20 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                     role="radio"
                     aria-checked={showCustom}
                     onClick={openCustom}
-                    className={`flex items-center gap-4 rounded-xl border-3 border-dashed border-ink px-4 py-4 text-left text-lg font-semibold transition-colors duration-100 ${
-                      showCustom ? "bg-pink-soft" : "bg-white hover:bg-pink-wash"
+                    className={`flex items-center justify-between gap-4 rounded-2xl border border-dashed px-5 py-[18px] text-left text-[17px] transition-colors duration-200 ${
+                      showCustom ? "border-light text-light" : "border-white/20 text-fog hover:border-white/50 hover:text-light"
                     }`}
                   >
-                    <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-3 border-ink bg-white">
-                      <PenLine className="h-4 w-4" strokeWidth={2.5} />
-                    </span>
-                    Something else
+                    <span>Something else</span>
+                    <PenLine aria-hidden className="h-4 w-4" />
                   </button>
                 )}
               </div>
 
               {showCustom && (
-                <div className="mt-5">
-                  <label htmlFor="custom-answer" className="mb-2 block text-sm font-bold">
-                    Your own answer
+                <div className="mt-9">
+                  <label htmlFor="custom-answer" className="text-sm text-fog">
+                    In your own words
                   </label>
                   <input
                     id="custom-answer"
@@ -197,13 +186,14 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                     maxLength={120}
                     value={value}
                     onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
-                    placeholder="Describe it in your own words"
+                    placeholder="a red silk saree with a gold border"
                     aria-invalid={!!problem}
                     aria-describedby={problem ? "custom-problem" : undefined}
-                    className="w-full rounded-xl border-3 border-ink bg-white px-5 py-4 text-lg font-medium shadow-nb placeholder:text-neutral-400 focus:shadow-nb-hover focus:outline-none"
+                    className="mt-2 w-full border-0 border-b border-white/40 bg-transparent px-0 py-3 font-display text-3xl italic text-light placeholder:text-white/20 focus:border-light focus:outline-none focus:ring-0"
                   />
                   {problem && (
-                    <p id="custom-problem" className="mt-3 text-sm font-semibold text-pink-deep" role="alert">
+                    <p id="custom-problem" className="mt-3 flex items-start gap-2 text-sm text-light" role="alert">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                       {problem}
                     </p>
                   )}
@@ -212,46 +202,37 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
             </MotionDiv>
           </AnimatePresence>
 
-          <div className="mt-auto flex items-center justify-between gap-3 pt-12">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-14">
             {index > 0 ? (
-              <button type="button" onClick={() => go(index - 1)} className="nb-btn-white px-5">
-                <ArrowLeft className="h-4 w-4" strokeWidth={3} aria-hidden />
+              <button type="button" onClick={() => go(index - 1)} className="btn-ghost px-5">
+                <ArrowLeft className="h-4 w-4" aria-hidden />
                 Back
               </button>
             ) : (
               <span />
             )}
-            <button type="button" onClick={next} disabled={!answered} className="nb-btn-pink px-8">
-              {isLast ? "Draw her" : "Next"}
-            </button>
+            <div className="flex items-center gap-5">
+              <p className="hidden text-sm text-fog md:block">Keys 1 to {q.options.length + (q.custom ? 1 : 0)}, then Enter</p>
+              <button type="button" onClick={next} disabled={!answered} className={isLast ? "btn-light px-8" : "btn-ghost px-8"}>
+                {isLast ? "Bring her to life" : "Next"}
+              </button>
+            </div>
           </div>
-          <p className="mt-4 hidden text-right text-sm text-neutral-600 sm:block">
-            Press 1 to {q.options.length + (q.custom ? 1 : 0)} to pick, Enter to continue.
-          </p>
         </div>
 
-        {/* Running list of answers. Desktop only. */}
-        <aside className="hidden lg:block" aria-label="Your answers so far">
-          <div className="nb-card sticky top-8 overflow-hidden">
-            <div className="flex items-baseline justify-between border-b-3 border-ink bg-pink-soft px-5 py-3">
-              <h2 className="font-bold">Your answers</h2>
-              <span className="font-display text-xl">{progress}/10</span>
+        {/* Her, still a glow, with what you've told us so far. Desktop only. */}
+        <aside className="hidden lg:block" aria-label="What you've told us about her">
+          <div className="sticky top-10">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-[28px] shadow-halo">
+              <img src={NIGHT.glow} alt="" className="h-full w-full animate-breathe object-cover" />
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-void/80 via-transparent to-transparent" />
+              <p className="absolute inset-x-0 bottom-0 p-6 font-display text-xl italic leading-snug text-light">
+                {known.length ? known.map((k) => k.toLowerCase()).join(", ") : "Tell us about her."}
+              </p>
             </div>
-            <ul className="flex flex-wrap gap-2 p-5">
-              {questions.map((item, n) => {
-                const a = answers[item.key]?.trim();
-                return (
-                  <li
-                    key={item.key}
-                    className={`rounded-full border-3 px-3 py-1 text-sm font-semibold ${
-                      a ? "border-ink bg-white" : "border-dashed border-neutral-300 text-neutral-400"
-                    } ${n === index ? "ring-2 ring-pink ring-offset-2" : ""}`}
-                  >
-                    {a || n + 1}
-                  </li>
-                );
-              })}
-            </ul>
+            <p className="mt-5 text-center text-sm tabular-nums text-fog">
+              {known.length} of 10 known
+            </p>
           </div>
         </aside>
       </main>

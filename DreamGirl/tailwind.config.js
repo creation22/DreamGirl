@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+// Theme taken from the hero photograph: black-and-white night film, grain, and one
+// source of light (her). White glow is the only accent.
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   // Hover styles only on devices that can hover, so taps on phones don't stick.
@@ -6,39 +8,47 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#000000",
-        pink: {
-          DEFAULT: "#FF5FA2", // fills: buttons, highlight slab, selected answers
-          deep: "#D6116A", // pink text on white (passes contrast)
-          soft: "#FFC6DF", // secondary blocks, caption strips
-          wash: "#FFF0F6", // alternate section background
-        },
+        void: "#0D0D0D", // page, the photo's sky
+        ash: "#181818", // raised surfaces
+        smoke: "#2A2A2A", // lines and borders
+        fog: "#8F8F8F", // secondary text
+        mist: "#D6D6D6", // body text
+        light: "#FFFFFF", // her
       },
       fontFamily: {
-        display: ['"Dela Gothic One"', "Impact", "sans-serif"],
-        sans: ['"Lexend"', "system-ui", "sans-serif"],
+        display: ['"Bodoni Moda"', "Didot", "Georgia", "serif"],
+        sans: ['"Archivo"', "system-ui", "sans-serif"],
       },
-      borderWidth: { 3: "3px" },
       boxShadow: {
-        "nb-sm": "2px 2px 0 0 #000",
-        nb: "4px 4px 0 0 #000",
-        "nb-hover": "6px 6px 0 0 #000",
-        "nb-lg": "8px 8px 0 0 #000",
+        glow: "0 0 24px rgba(255,255,255,.35), 0 0 64px rgba(255,255,255,.18)",
+        "glow-lg": "0 0 40px rgba(255,255,255,.45), 0 0 120px rgba(255,255,255,.22)",
+        halo: "0 0 0 1px rgba(255,255,255,.08), 0 0 80px rgba(255,255,255,.10)",
       },
       keyframes: {
-        develop: {
-          "0%": { filter: "blur(14px) saturate(0) brightness(1.5) contrast(.6)", opacity: "0.6" },
-          "60%": { filter: "blur(3px) saturate(.6) brightness(1.1)", opacity: "1" },
-          "100%": { filter: "none", opacity: "1" },
+        // She steps out of the light: pure glow first, then her face.
+        emerge: {
+          "0%": { opacity: "0.2", filter: "brightness(3.2) blur(28px) contrast(.6) grayscale(1)" },
+          "45%": { opacity: "1", filter: "brightness(1.8) blur(10px) contrast(.8) grayscale(.6)" },
+          "100%": { opacity: "1", filter: "none" },
         },
-        stripes: {
-          "0%": { backgroundPosition: "0 0" },
-          "100%": { backgroundPosition: "56px 0" },
+        breathe: {
+          "0%, 100%": { opacity: ".75", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.015)" },
+        },
+        rise: {
+          "0%": { opacity: "0", transform: "translateY(14px)" },
+          "100%": { opacity: "1", transform: "none" },
+        },
+        fade: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
       animation: {
-        develop: "develop 1.6s cubic-bezier(.22,1,.36,1) both",
-        stripes: "stripes 1.2s linear infinite",
+        emerge: "emerge 2.2s cubic-bezier(.22,1,.36,1) both",
+        breathe: "breathe 3.2s ease-in-out infinite",
+        rise: "rise .9s cubic-bezier(.22,1,.36,1) both",
+        fade: "fade 1.6s ease-out both",
       },
     },
   },

@@ -55,30 +55,29 @@ export default function HandleDialog({ open, onClose, initial = "" }) {
         skip();
       }}
       aria-labelledby={`${inputId}-title`}
-      className="w-[min(92vw,460px)] rounded-2xl border-3 border-ink bg-white p-0 text-ink shadow-nb-lg backdrop:bg-ink/40"
+      className="w-[min(92vw,480px)] overflow-hidden rounded-[28px] border border-white/10 bg-ash p-0 text-mist shadow-halo backdrop:bg-black/70 backdrop:backdrop-blur-sm"
     >
-      <form onSubmit={save} className="relative p-6 sm:p-8">
+      <form onSubmit={save} className="relative px-7 pb-8 pt-9 sm:px-10 sm:pb-10 sm:pt-11">
         <button
           type="button"
           onClick={skip}
           aria-label="Close"
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg border-3 border-ink bg-white hover:bg-pink-wash"
+          className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full text-fog transition-colors hover:bg-white/10 hover:text-light"
         >
-          <X className="h-4 w-4" strokeWidth={3} />
+          <X className="h-5 w-5" strokeWidth={1.75} />
         </button>
-        <h2 id={`${inputId}-title`} className="pr-10 font-display text-2xl leading-tight sm:text-3xl">
-          {editing ? "Change your X username" : "What's your X username?"}
+        <h2 id={`${inputId}-title`} className="glow-text pr-8 font-display text-[40px] font-normal leading-[1] tracking-[-0.02em] text-light">
+          {editing ? "Change your username" : "Who's dreaming?"}
         </h2>
-        <p className="mt-3 leading-relaxed text-neutral-700">
-          Every portrait you make goes in the public gallery under this name, so friends can see who
-          you dreamed up.
+        <p className="mt-4 text-[17px] leading-relaxed text-fog">
+          Everyone you bring to life goes in the public gallery under your X username, so friends can see who you dreamed up.
         </p>
 
-        <label htmlFor={inputId} className="mt-6 block text-sm font-bold">
-          X / Twitter username
+        <label htmlFor={inputId} className="mt-8 block text-sm text-fog">
+          X username
         </label>
-        <div className="mt-2 flex items-center rounded-xl border-3 border-ink bg-white shadow-nb focus-within:shadow-nb-hover">
-          <span aria-hidden className="pl-4 text-lg font-bold text-neutral-500">
+        <div className="mt-1 flex items-baseline border-b border-white/30 focus-within:border-light">
+          <span aria-hidden className="font-display text-3xl text-fog">
             @
           </span>
           <input
@@ -96,26 +95,26 @@ export default function HandleDialog({ open, onClose, initial = "" }) {
             placeholder="yourname"
             aria-invalid={!!error}
             aria-describedby={error ? `${inputId}-err` : undefined}
-            className="w-full rounded-xl bg-transparent px-2 py-3.5 text-lg font-semibold outline-none"
+            className="w-full border-0 bg-transparent px-1 py-2 font-display text-3xl text-light placeholder:text-white/20 focus:outline-none focus:ring-0"
           />
         </div>
         {error && (
-          <p id={`${inputId}-err`} className="mt-2 text-sm font-semibold text-pink-deep">
+          <p id={`${inputId}-err`} className="mt-2 text-sm text-light">
             {error}
           </p>
         )}
 
-        <div className="mt-7 flex flex-wrap items-center gap-4">
-          <button type="submit" className="nb-btn-pink">
-            Save username
+        <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+          <button type="submit" className="btn-light px-8">
+            {editing ? "Save" : "Continue"}
           </button>
           {editing ? (
-            <button type="button" onClick={stopPosting} className="text-sm font-semibold underline decoration-2 underline-offset-4">
+            <button type="button" onClick={stopPosting} className="text-sm text-fog underline decoration-white/20 underline-offset-[5px] hover:text-light">
               Stop posting my portraits
             </button>
           ) : (
-            <button type="button" onClick={skip} className="text-sm font-semibold underline decoration-2 underline-offset-4">
-              Skip, don't post my portraits
+            <button type="button" onClick={skip} className="text-sm text-fog underline decoration-white/20 underline-offset-[5px] hover:text-light">
+              Skip, keep mine private
             </button>
           )}
         </div>

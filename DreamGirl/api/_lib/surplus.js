@@ -113,7 +113,7 @@ async function devSample() {
   const files = ["braids-gold", "bob-glasses", "cartoon-classic", "indian-smile", "serious-dark"];
   const name = files[Math.floor(Math.random() * files.length)];
   await new Promise((r) => setTimeout(r, 1500));
-  const bytes = await readFile(resolve(process.cwd(), "public", "examples", `${name}.webp`));
+  const bytes = await readFile(resolve(process.cwd(), "scripts", "dev-samples", `${name}.webp`));
   return { bytes, contentType: "image/webp", model: "venice-flux-2-pro", costMicro: 7500 + Math.floor(Math.random() * 3000), ms: 1500 };
 }
 

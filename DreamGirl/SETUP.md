@@ -39,6 +39,18 @@ Without `SUPABASE_URL` set, the local server uses a throwaway in-memory gallery.
 `SURPLUS_API_KEY`, it returns sample pictures with made-up prices so the UI can be tried.
 Set the variables in your shell (not in a committed file) to test against the real services.
 
+## The photograph
+
+The whole look comes from one black-and-white photo (`public/night/`). To swap it:
+
+```bash
+python scripts/prepare_night.py path/to/photo.jpg
+```
+
+It writes the full frame, a blurred background copy and a crop of the glowing girl
+(adjust `GLOW_BOX` in the script if she stands somewhere else in the new photo).
+`scripts/dev-samples/` holds the sample portraits local test mode uses without a Surplus key.
+
 ## Moderating
 
 Typed answers that mention minors or explicit content are refused in the quiz and again on
