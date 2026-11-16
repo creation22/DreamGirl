@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Check, PenLine } from "lucide-react";
 import { Header } from "./Chrome";
 import { questions } from "../constants/question";
+import { checkText } from "../utils/moderation";
 
 const EASE_OUT = [0.22, 1, 0.36, 1];
 const MotionDiv = motion.div;
@@ -27,7 +28,9 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
   const q = questions[index];
   const value = answers[q.key] ?? "";
   const isLast = index === questions.length - 1;
-  const answered = value.trim() !== "";
+  // Typed answers are checked as you type; the server checks again before drawing.
+  const problem = checkText(value);
+  const answered = value.trim() !== "" && !problem;
   const showCustom = !!customOpen[q.key];
 
   const go = useCallback((next) => {
@@ -195,8 +198,15 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                     value={value}
                     onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
                     placeholder="Describe it in your own words"
+                    aria-invalid={!!problem}
+                    aria-describedby={problem ? "custom-problem" : undefined}
                     className="w-full rounded-xl border-3 border-ink bg-white px-5 py-4 text-lg font-medium shadow-nb placeholder:text-neutral-400 focus:shadow-nb-hover focus:outline-none"
                   />
+                  {problem && (
+                    <p id="custom-problem" className="mt-3 text-sm font-semibold text-pink-deep" role="alert">
+                      {problem}
+                    </p>
+                  )}
                 </div>
               )}
             </MotionDiv>

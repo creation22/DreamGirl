@@ -1,168 +1,191 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AtSign, Download, PencilLine, RefreshCw, RotateCcw, Share2, Trash2 } from "lucide-react";
 import { Header, Photo } from "./Chrome";
 import { LINKS } from "../constants/links";
-import { generatePrompt, imageUrlFor } from "../utils/generateprompt";
 import { captionFor } from "../constants/question";
+import { attachUsername, generatePortrait, removePortrait } from "../lib/api";
+import { forgetOwned, rememberOwned } from "../lib/me";
+import { Link, userPath } from "../lib/router";
+import { SURPLUS_URL, savedPct, usd } from "../utils/money";
 
-const TIMEOUT_MS = 90_000;
 const SITE = "https://dreamher.vercel.app";
-const newSeed = () => Math.floor(Math.random() * 1_000_000);
 
-// Pollinations' free tier draws one image per 45 seconds per visitor, counted from when the
-// last one finished. A request inside that window returns HTTP 503 with a yellow
-// "Free limit reached" picture, and <img> can't see the status, so we pace drawings
-// ourselves. (fetch() can't be used to check: Pollinations answers page fetches with
-// 403 "Missing Turnstile token".) Kept in sessionStorage so Start over can't skip the wait.
-const COOLDOWN_MS = 47_000;
-const LAST_DRAW_KEY = "dreamher:lastDrawAt";
-let lastDrawInMemory = 0;
-function lastDrawAt() {
-  try {
-    return Number(sessionStorage.getItem(LAST_DRAW_KEY)) || lastDrawInMemory;
-  } catch {
-    return lastDrawInMemory;
-  }
-}
-function markDraw(t) {
-  lastDrawInMemory = t;
-  try {
-    sessionStorage.setItem(LAST_DRAW_KEY, String(t));
-  } catch {
-    /* storage blocked: the in-memory value still paces this tab */
-  }
+function downloadHref(url, id) {
+  if (url.startsWith("data:")) return url; // local dev
+  return `${url}${url.includes("?") ? "&" : "?"}download=dreamher-${id.slice(0, 8)}`;
 }
 
-export default function Result({ answers, onRestart, onEdit }) {
-  const prompt = useMemo(() => generatePrompt(answers), [answers]);
-  const [seed, setSeed] = useState(newSeed);
-  const [status, setStatus] = useState("waiting"); // waiting | loading | ready | error
-  const [imageUrl, setImageUrl] = useState("");
-  const [startedAt, setStartedAt] = useState(0);
+/** What this portrait cost on Surplus, next to the list price. */
+function Receipt({ receipt }) {
+  const saved = savedPct(receipt.costMicro, receipt.listMicro);
+  return (
+    <div className="nb-card mt-8 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b-3 border-ink bg-pink-soft px-4 py-2.5">
+        <h2 className="font-bold">What she cost to draw</h2>
+        {saved !== null && (
+          <span className="rounded-full border-3 border-ink bg-white px-2.5 py-0.5 text-sm font-bold">{saved}% off</span>
+        )}
+      </div>
+      <dl className="divide-y-2 divide-dashed divide-neutral-300 px-4 text-sm">
+        <div className="flex justify-between gap-4 py-2.5">
+          <dt className="text-neutral-700">Model</dt>
+          <dd className="font-semibold">{receipt.modelLabel}</dd>
+        </div>
+        {receipt.listMicro > 0 && (
+          <div className="flex justify-between gap-4 py-2.5">
+            <dt className="text-neutral-700">List price</dt>
+            <dd className="font-semibold tabular-nums text-neutral-500 line-through decoration-2">{usd(receipt.listMicro)}</dd>
+          </div>
+        )}
+        {receipt.costMicro > 0 && (
+          <div className="flex items-center justify-between gap-4 py-3">
+            <dt className="font-semibold">Paid on Surplus Intelligence</dt>
+            <dd className="rounded-lg border-3 border-ink bg-pink px-2.5 py-1 font-display text-xl tabular-nums">{usd(receipt.costMicro)}</dd>
+          </div>
+        )}
+        <div className="flex justify-between gap-4 py-2.5">
+          <dt className="text-neutral-700">Drawing time</dt>
+          <dd className="font-semibold tabular-nums">{receipt.seconds}s</dd>
+        </div>
+      </dl>
+      <p className="border-t-3 border-ink px-4 py-3 text-sm leading-relaxed">
+        Surplus routes every request to the cheapest healthy seller of spare AI capacity.{" "}
+        <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-bold underline decoration-2 underline-offset-4 hover:text-pink-deep">
+          Get these prices for your app
+        </a>
+      </p>
+    </div>
+  );
+}
+
+export default function Result({ answers, handle, onAskHandle, onRestart, onEdit }) {
+  const [attempt, setAttempt] = useState(0);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [data, setData] = useState(null); // {item, token, posted, receipt, prompt}
+  const [error, setError] = useState("");
+  const [startedAt, setStartedAt] = useState(Date.now);
   const [now, setNow] = useState(Date.now);
+  const [post, setPost] = useState({ state: "idle", msg: "" }); // idle | posting | posted | removed | error
+  const started = useRef(-1);
+  const current = useRef(0);
 
+  // One request per attempt. The ref guard also stops StrictMode from drawing (and paying) twice.
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (!prompt) {
-      setStatus("error");
-      return;
-    }
-    const url = imageUrlFor(prompt, seed);
-    const img = new Image();
-    let timeout;
-
-    const start = () => {
-      const t = Date.now();
-      markDraw(t);
-      setStartedAt(t);
-      setNow(t);
-      setStatus("loading");
-      timeout = setTimeout(() => {
-        img.onload = img.onerror = null;
-        img.src = "";
-        setStatus("error");
-      }, TIMEOUT_MS);
-      img.onload = () => {
-        clearTimeout(timeout);
-        markDraw(Date.now());
-        setImageUrl(url);
+    if (started.current === attempt) return;
+    started.current = attempt;
+    current.current = attempt;
+    setStatus("loading");
+    setError("");
+    setData(null);
+    setPost({ state: "idle", msg: "" });
+    setStartedAt(Date.now());
+    generatePortrait(answers, handle)
+      .then((d) => {
+        rememberOwned(d.item.id, d.token);
+        if (current.current !== attempt) return;
+        setData(d);
+        setPost(d.posted ? { state: "posted", msg: "" } : { state: "idle", msg: "" });
         setStatus("ready");
-      };
-      img.onerror = () => {
-        clearTimeout(timeout);
-        markDraw(Date.now());
+      })
+      .catch((e) => {
+        if (current.current !== attempt) return;
+        setError(e.message);
         setStatus("error");
-      };
-      img.src = url;
-    };
+      });
+    // handle is read once per drawing on purpose; adding it later posts via the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt, answers]);
 
-    const wait = Math.max(0, lastDrawAt() + COOLDOWN_MS - Date.now());
-    setStatus(wait > 0 ? "waiting" : "loading");
-    const delay = setTimeout(start, wait);
+  useEffect(() => {
+    if (status !== "loading") return;
+    const id = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(id);
+  }, [status]);
 
-    return () => {
-      clearTimeout(delay);
-      clearTimeout(timeout);
-      img.onload = img.onerror = null;
-    };
-  }, [prompt, seed]);
+  const postAs = useCallback(
+    async (name) => {
+      if (!data) return;
+      setPost({ state: "posting", msg: "" });
+      try {
+        const r = await attachUsername(data.item.id, data.token, name);
+        setData((d) => ({ ...d, item: r.item, posted: true }));
+        setPost({ state: "posted", msg: "" });
+      } catch (e) {
+        setPost({ state: "error", msg: e.message });
+      }
+    },
+    [data],
+  );
 
-  const cooldownLeft = Math.max(0, Math.ceil((lastDrawAt() + COOLDOWN_MS - now) / 1000));
-  const elapsed = Math.max(0, Math.round((now - startedAt) / 1000));
-  const busy = status === "waiting" || status === "loading";
-  const drawAgain = () => setSeed(newSeed());
+  // Username added after she was drawn: post her now (every portrait goes in the gallery).
+  useEffect(() => {
+    if (status === "ready" && handle && data && !data.posted && post.state === "idle") postAs(handle);
+  }, [status, handle, data, post.state, postAs]);
+
+  const remove = async () => {
+    if (!data || !window.confirm("Remove her from the public gallery? The picture is deleted.")) return;
+    try {
+      await removePortrait(data.item.id, data.token);
+      forgetOwned(data.item.id);
+      setData((d) => ({ ...d, posted: false }));
+      setPost({ state: "removed", msg: "" });
+    } catch (e) {
+      setPost({ state: "error", msg: e.message });
+    }
+  };
 
   const share = async () => {
-    const text = "I described my dream girl and DreamHer drew her. Try it:";
+    const posted = data?.posted && data.item.username;
+    const url = posted ? `${SITE}${userPath(data.item.username)}` : SITE;
+    const text = "I described my dream girl and DreamHer drew her for under a cent. Try it:";
     if (navigator.share) {
       try {
-        await navigator.share({ title: "DreamHer", text, url: SITE });
+        await navigator.share({ title: "DreamHer", text, url });
         return;
       } catch (e) {
         if (e?.name === "AbortError") return;
       }
     }
-    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE)}`;
-    window.open(intent, "_blank", "noopener");
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
   };
 
   const caption = captionFor(answers) || "your dream girl";
-  const link =
-    "inline-flex items-center gap-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
+  const elapsed = Math.max(0, Math.round((now - startedAt) / 1000));
+  const loading = status === "loading";
+  const link = "inline-flex items-center gap-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
 
   return (
     <div className="flex min-h-[100svh] flex-col overflow-x-clip">
       <Header onHome={onRestart} />
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-20 lg:pt-14">
-        <div className="mx-auto w-full max-w-[460px]">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 items-start gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-20 lg:pt-14">
+        <div className="mx-auto w-full max-w-[460px] lg:sticky lg:top-8">
           <Photo caption={caption} shadow="shadow-nb-lg" className="-rotate-1">
-            {status === "ready" && (
+            {status === "ready" && data && (
               <img
-                key={imageUrl}
-                src={imageUrl}
+                key={data.item.id}
+                src={data.item.imageUrl}
                 alt={`AI portrait: ${caption}`}
-                width="768"
-                height="768"
+                width="1024"
+                height="1024"
                 className="h-full w-full animate-develop object-cover"
               />
             )}
-            {busy && (
-              <div
-                className="nb-stripes flex h-full w-full animate-stripes items-center justify-center p-6"
-                role="status"
-              >
+            {loading && (
+              <div className="nb-stripes flex h-full w-full animate-stripes items-center justify-center p-6" role="status">
                 <div className="nb-card max-w-[17rem] px-5 py-4 text-center">
-                  {status === "waiting" ? (
-                    <>
-                      <p className="font-display text-2xl tabular-nums">Starting in {cooldownLeft}s</p>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-700">
-                        The free drawing service allows one portrait every 45 seconds.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-display text-2xl">Drawing her</p>
-                      <p className="mt-2 text-sm tabular-nums text-neutral-700">
-                        {elapsed}s {elapsed > 25 ? "(busy right now, still going)" : "(usually 10 to 30 seconds)"}
-                      </p>
-                    </>
-                  )}
+                  <p className="font-display text-2xl">Drawing her</p>
+                  <p className="mt-2 text-sm tabular-nums text-neutral-700">
+                    {elapsed}s {elapsed > 20 ? "(almost there)" : "(usually 5 to 20 seconds)"}
+                  </p>
                 </div>
               </div>
             )}
             {status === "error" && (
               <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center" role="alert">
-                <p className="font-display text-2xl">The portrait didn't come back.</p>
-                <p className="max-w-[18rem] text-sm leading-relaxed text-neutral-700">
-                  The drawing service is busy or timed out. Your answers are kept, so trying again
-                  takes one tap.
-                </p>
-                <button type="button" onClick={drawAgain} className="nb-btn-pink text-sm">
+                <p className="font-display text-2xl">She wasn't drawn.</p>
+                <p className="max-w-[18rem] text-sm leading-relaxed text-neutral-700">{error}</p>
+                <button type="button" onClick={() => setAttempt((n) => n + 1)} className="nb-btn-pink text-sm">
                   <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
                   Try again
                 </button>
@@ -180,30 +203,60 @@ export default function Result({ answers, onRestart, onEdit }) {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            {status === "ready" ? (
-              <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="nb-btn-pink">
+            {status === "ready" && data ? (
+              <a href={downloadHref(data.item.imageUrl, data.item.id)} download="dreamher.png" className="nb-btn-pink">
                 <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-                Open full size
+                Download
               </a>
             ) : (
               <button type="button" disabled className="nb-btn-pink">
                 <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-                Open full size
+                Download
               </button>
             )}
-            <button type="button" onClick={drawAgain} disabled={busy || cooldownLeft > 0} className="nb-btn-white tabular-nums">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} disabled={loading} className="nb-btn-white">
               <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
-              {!busy && cooldownLeft > 0 ? `Draw her again in ${cooldownLeft}s` : "Draw her again"}
+              Draw her again
             </button>
-            <button type="button" onClick={share} className="nb-btn-white">
+            <button type="button" onClick={share} disabled={loading} className="nb-btn-white">
               <Share2 className="h-4 w-4" strokeWidth={3} aria-hidden />
               Share
             </button>
           </div>
-          <p className="mt-4 text-sm text-neutral-600">
-            Full size opens in a new tab to save. Got a Pollinations "limit" card instead of her? The
-            free service is busy. Wait for the countdown, then draw her again.
-          </p>
+
+          {/* Gallery status */}
+          {status === "ready" && data && (
+            <div className="mt-6 rounded-xl border-3 border-dashed border-ink bg-pink-wash px-4 py-3 text-sm" role="status">
+              {post.state === "posted" && (
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span>
+                    Posted to the public gallery as <strong>@{data.item.username}</strong>.
+                  </span>
+                  <Link to={userPath(data.item.username)} className={link}>
+                    See your page
+                  </Link>
+                  <button type="button" onClick={remove} className={link}>
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    Remove
+                  </button>
+                </p>
+              )}
+              {post.state === "posting" && <p>Posting her to the gallery...</p>}
+              {post.state === "removed" && <p>Removed from the gallery and deleted.</p>}
+              {post.state === "error" && <p className="font-semibold text-pink-deep">{post.msg}</p>}
+              {post.state === "idle" && !handle && (
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <span>Add your X username to put her in the public gallery.</span>
+                  <button type="button" onClick={onAskHandle} className={link}>
+                    <AtSign className="h-4 w-4" aria-hidden />
+                    Add username
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
+
+          {status === "ready" && data?.receipt && <Receipt receipt={data.receipt} />}
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <button type="button" onClick={onEdit} className={link}>
@@ -216,12 +269,12 @@ export default function Result({ answers, onRestart, onEdit }) {
             </button>
           </div>
 
-          {prompt && (
-            <details className="nb-card group mt-10 overflow-hidden text-sm">
+          {data?.prompt && (
+            <details className="nb-card group mt-8 overflow-hidden text-sm">
               <summary className="cursor-pointer list-none px-4 py-3 font-bold group-open:border-b-3 group-open:border-ink group-open:bg-pink-soft [&::-webkit-details-marker]:hidden">
                 See the description we sent
               </summary>
-              <p className="px-4 py-3 leading-relaxed text-neutral-700">{prompt.positive}</p>
+              <p className="px-4 py-3 leading-relaxed text-neutral-700">{data.prompt}</p>
             </details>
           )}
 

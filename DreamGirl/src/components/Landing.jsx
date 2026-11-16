@@ -4,6 +4,10 @@ import { Plus } from "lucide-react";
 import { Header, Heart, Photo } from "./Chrome";
 import { LINKS } from "../constants/links";
 import { gallery } from "../constants/gallery";
+import { listPortraits } from "../lib/api";
+import { Link, userPath } from "../lib/router";
+import { SURPLUS_URL, usd } from "../utils/money";
+import { StatsCard, useSurplusStats } from "./SurplusStats";
 
 const CYCLE_MS = 4500;
 
@@ -66,37 +70,53 @@ const steps = [
     body: "Your answers become a detailed prompt for the image model. You can read it on the result.",
   },
   {
-    title: "She's drawn",
-    body: "Save her, share her, or draw her again from the same answers for a new take.",
+    title: "Surplus draws her",
+    body: "Surplus Intelligence draws her in seconds for about a cent. Download her, share her, or draw her again.",
   },
 ];
 
 const faqs = [
   {
     q: "Is it free?",
-    a: "Yes. There's no account and no payment. Portraits come from Pollinations, a free image service, which allows one drawing every 45 seconds.",
+    a: "Yes. There's no account and no payment. Each portrait costs DreamHer about a cent on Surplus Intelligence, which is why it can stay free.",
+  },
+  {
+    q: "Who draws the portraits?",
+    a: "Surplus Intelligence, a marketplace for AI. Providers with spare capacity sell it at a discount, and every portrait goes to the cheapest one that's up. The receipt under your portrait shows the model, the list price and what was actually paid.",
+  },
+  {
+    q: "Where do my portraits go?",
+    a: "If you gave your X username, every portrait goes in the public gallery on your page. You can remove any of them from the result screen or the gallery, from the same browser.",
   },
   {
     q: "Will I get the same portrait twice?",
-    a: "No. Every drawing starts from a new random seed. Use Draw her again to see another take on the same answers.",
+    a: "No. Every drawing is new. Use Draw her again to see another take on the same answers.",
   },
   {
     q: "What if my answer isn't in the list?",
     a: "Most questions have a Something else choice. Type whatever you have in mind and it goes into the description as written.",
   },
   {
-    q: "Are my answers saved?",
-    a: "No. Your answers stay in your browser. Only the written description is sent to the image service to draw her.",
-  },
-  {
     q: "Can I save her?",
-    a: "Yes. Open full size puts the 768 by 768 image in a new tab, where you can save it.",
+    a: "Yes. Download gives you the full 1024 by 1024 picture.",
   },
 ];
 
 const tilt = ["-rotate-2", "rotate-1", "-rotate-1", "rotate-2", "rotate-[-1.5deg]", "rotate-[1.5deg]"];
 
 export default function Landing({ onStart }) {
+  const stats = useSurplusStats();
+  const [live, setLive] = useState(null);
+  useEffect(() => {
+    let on = true;
+    listPortraits({ limit: 6 })
+      .then((d) => on && d.items.length >= 6 && setLive(d.items))
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, []);
+
   return (
     <div className="overflow-x-clip">
       <Header />
@@ -118,6 +138,13 @@ export default function Landing({ onStart }) {
             <button type="button" onClick={onStart} className="nb-btn-pink mt-9 px-8 py-4 text-lg">
               Start the 10 questions
             </button>
+            <p className="mt-6 text-sm font-semibold text-neutral-700">
+              Drawn by{" "}
+              <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="text-ink underline decoration-2 underline-offset-4 hover:text-pink-deep">
+                Surplus Intelligence
+              </a>{" "}
+              for about a cent a portrait.
+            </p>
           </div>
           <DevelopingStack />
         </section>
@@ -143,15 +170,89 @@ export default function Landing({ onStart }) {
           </div>
         </section>
 
-        {/* Gallery */}
-        <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-3xl sm:text-4xl">Drawn from other people's answers</h2>
-            <p className="mt-4 text-lg leading-relaxed text-neutral-700">
-              Every portrait here came out of the same 10 questions. The strip under each one is
-              what was picked.
+        {/* Surplus */}
+        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-24 sm:px-6 lg:grid-cols-2">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl">Why a portrait costs about a cent</h2>
+            <p className="mt-5 text-lg leading-relaxed text-neutral-700">
+              DreamHer doesn't run its own image servers. Every portrait is sent to{" "}
+              <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink underline decoration-2 underline-offset-4 hover:text-pink-deep">
+                Surplus Intelligence
+              </a>
+              , a marketplace where AI providers sell their spare capacity at a discount. Each
+              request goes to the cheapest seller that's up, so a FLUX.2 Pro portrait listed at
+              3 cents usually costs around one.
             </p>
+            <p className="mt-4 text-lg leading-relaxed text-neutral-700">
+              The receipt under every portrait shows what it really cost.
+            </p>
+            <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="nb-btn-white mt-8">
+              See Surplus Intelligence
+            </a>
           </div>
+          {stats ? (
+            <StatsCard stats={stats} />
+          ) : (
+            <div className="nb-card overflow-hidden">
+              <dl className="divide-y-3 divide-ink">
+                <div className="flex items-baseline justify-between gap-4 px-5 py-4">
+                  <dt className="text-sm font-semibold">FLUX.2 Pro list price</dt>
+                  <dd className="font-display text-2xl text-neutral-500 line-through decoration-[3px] sm:text-3xl">$0.030</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-4 bg-pink px-5 py-4">
+                  <dt className="text-sm font-semibold">What Surplus sellers charge</dt>
+                  <dd className="font-display text-2xl sm:text-3xl">up to 75% less</dd>
+                </div>
+              </dl>
+              <p className="border-t-3 border-ink bg-pink-soft px-5 py-3 text-sm font-bold">Live totals appear here once portraits are drawn.</p>
+            </div>
+          )}
+        </section>
+
+        {/* Gallery */}
+        <section className="border-t-3 border-ink">
+          <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-2xl">
+                <h2 className="font-display text-3xl sm:text-4xl">
+                  {live ? "Just drawn" : "Drawn from other people's answers"}
+                </h2>
+                <p className="mt-4 text-lg leading-relaxed text-neutral-700">
+                  {live
+                    ? "The newest portraits from the public gallery, with who made them and what each one cost."
+                    : "Every portrait here came out of the same 10 questions. The strip under each one is what was picked."}
+                </p>
+              </div>
+              <Link to="/gallery" className="nb-btn-white shrink-0 self-start md:self-auto">
+                See the public gallery
+              </Link>
+            </div>
+            {live ? (
+              <ul className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:grid-cols-3">
+                {live.map((g, n) => (
+                  <li key={g.id}>
+                    <Photo
+                      caption={
+                        <>
+                          <Link to={userPath(g.username)} className="font-bold underline decoration-2 underline-offset-2 hover:text-pink-deep">
+                            @{g.username}
+                          </Link>{" "}
+                          {g.caption}
+                        </>
+                      }
+                      className={`${tilt[n % tilt.length]} transition-[transform,box-shadow] duration-150 ease-out hover:rotate-0 hover:shadow-nb-lg`}
+                    >
+                      <img src={g.imageUrl} alt={`AI portrait by @${g.username}: ${g.caption}`} loading="lazy" width="1024" height="1024" className="h-full w-full object-cover" />
+                      {g.costMicro > 0 && (
+                        <span className="absolute left-2 top-2 rounded-md border-3 border-ink bg-white px-1.5 py-0.5 text-xs font-bold tabular-nums shadow-nb-sm">
+                          {usd(g.costMicro)}
+                        </span>
+                      )}
+                    </Photo>
+                  </li>
+                ))}
+              </ul>
+            ) : (
           <ul className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:grid-cols-3">
             {gallery.map((g, n) => (
               <li key={g.src}>
@@ -171,6 +272,8 @@ export default function Landing({ onStart }) {
               </li>
             ))}
           </ul>
+            )}
+          </div>
         </section>
 
         {/* FAQ */}
@@ -223,7 +326,11 @@ export default function Landing({ onStart }) {
               <a href="https://github.com/creation22" target="_blank" rel="noopener noreferrer" className="font-bold text-pink underline-offset-4 hover:underline">
                 creation22
               </a>
-              . Portraits by Pollinations AI.
+              . Portraits drawn by{" "}
+              <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-pink underline-offset-4 hover:underline">
+                Surplus Intelligence
+              </a>
+              .
             </span>
           </p>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 font-semibold" aria-label="Footer">

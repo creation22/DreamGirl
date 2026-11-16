@@ -122,17 +122,11 @@ export function generatePrompt(answers) {
   };
 
   prompt += `, ${styleMods[style] ?? `${style} style, high quality artwork`}`;
-  prompt += ", perfect composition, beautiful lighting, high detail, masterpiece";
+  // Portraits go to a public gallery, so keep every one clothed and safe for work.
+  prompt += ", fully clothed, tasteful, safe for work, perfect composition, beautiful lighting, high detail, masterpiece";
 
   const negative =
     "ugly, deformed, blurry, low quality, pixelated, distorted, bad anatomy, extra limbs, missing features, watermark, text";
 
   return { positive: prompt, negative };
-}
-
-// Pollinations draws the image straight from a URL. A new seed gives a new drawing.
-export function imageUrlFor(promptData, seed) {
-  const prompt = encodeURIComponent(promptData.positive);
-  const negative = encodeURIComponent(promptData.negative);
-  return `https://image.pollinations.ai/prompt/${prompt}?width=768&height=768&model=flux&seed=${seed}&enhance=true&nologo=true&negative=${negative}`;
 }

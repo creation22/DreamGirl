@@ -1,4 +1,7 @@
-import { Coffee, Star } from "lucide-react";
+import { createContext, useContext } from "react";
+import { AtSign, Coffee, Images, Star } from "lucide-react";
+import { Link } from "../lib/router";
+import { useHandle } from "../lib/me";
 import { LINKS } from "../constants/links";
 
 const HEART =
@@ -12,40 +15,54 @@ export function Heart({ className = "" }) {
   );
 }
 
-export function Logo({ onClick }) {
-  const inner = (
-    <>
+export function Logo() {
+  return (
+    <Link to="/" className="flex items-center gap-2" aria-label="DreamHer home">
       <Heart className="h-8 w-8" />
       <span className="font-display text-xl tracking-tight">DreamHer</span>
-    </>
+    </Link>
   );
-  if (!onClick) return <span className="flex items-center gap-2">{inner}</span>;
+}
+
+export const chipBtn =
+  "flex items-center gap-1.5 rounded-lg border-3 border-ink bg-white px-3 py-1.5 text-sm font-semibold shadow-nb-sm transition-[transform,box-shadow] duration-100 hover:-translate-x-px hover:-translate-y-px hover:shadow-nb active:translate-x-0.5 active:translate-y-0.5 active:shadow-none";
+
+/** Opens the username dialog; provided by App. */
+export const HandleDialogContext = createContext(() => {});
+
+function HandleChip() {
+  const handle = useHandle();
+  const openDialog = useContext(HandleDialogContext);
   return (
-    <button type="button" onClick={onClick} className="flex items-center gap-2" aria-label="DreamHer home">
-      {inner}
+    <button type="button" onClick={openDialog} className={`${chipBtn} max-w-[9.5rem] !bg-pink-soft`} title="Change your X username">
+      <AtSign className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />
+      <span className="truncate">{handle || "Add your X"}</span>
     </button>
   );
 }
 
-const linkBtn =
-  "flex items-center gap-1.5 rounded-lg border-3 border-ink bg-white px-3 py-1.5 text-sm font-semibold shadow-nb-sm transition-[transform,box-shadow] duration-100 hover:-translate-x-px hover:-translate-y-px hover:shadow-nb active:translate-x-0.5 active:translate-y-0.5 active:shadow-none";
-
 export function Header({ onHome, children }) {
   return (
     <header className="border-b-3 border-ink bg-white">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Logo onClick={onHome} />
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <Link to="/" onClick={onHome} className="flex shrink-0 items-center gap-2" aria-label="DreamHer home">
+          <Heart className="h-8 w-8" />
+          <span className="hidden font-display text-xl tracking-tight min-[400px]:inline">DreamHer</span>
+        </Link>
         {children ?? (
-          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Project links">
-            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={linkBtn}>
+          <nav className="flex min-w-0 items-center gap-2 sm:gap-3" aria-label="Main">
+            <Link to="/gallery" className={chipBtn}>
+              <Images className="h-4 w-4" aria-hidden />
+              Gallery
+            </Link>
+            <HandleChip />
+            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden md:flex`}>
               <Star className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Star on GitHub</span>
-              <span className="sm:hidden">Star</span>
+              Star on GitHub
             </a>
-            <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className={`${linkBtn} !bg-pink-soft`}>
+            <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden lg:flex`}>
               <Coffee className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Buy me a coffee</span>
-              <span className="sm:hidden">Coffee</span>
+              Buy me a coffee
             </a>
           </nav>
         )}
