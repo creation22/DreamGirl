@@ -111,15 +111,16 @@ export default function Result({ answers, onRestart, onEdit }) {
   };
 
   const caption = captionFor(answers) || "your dream girl";
+  const link =
+    "inline-flex items-center gap-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
 
   return (
     <div className="flex min-h-[100svh] flex-col overflow-x-clip">
       <Header onHome={onRestart} />
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-16 pt-4 sm:px-6 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-20 lg:pt-10">
-        <div className="relative mx-auto w-full max-w-[460px]">
-          <div aria-hidden className="pointer-events-none absolute -inset-12 rounded-full bg-rose/15 blur-3xl" />
-          <Photo caption={caption} className="relative -rotate-1">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-20 lg:pt-14">
+        <div className="mx-auto w-full max-w-[460px]">
+          <Photo caption={caption} shadow="shadow-nb-lg" className="-rotate-1">
             {status === "ready" && (
               <img
                 key={imageUrl}
@@ -132,35 +133,37 @@ export default function Result({ answers, onRestart, onEdit }) {
             )}
             {busy && (
               <div
-                className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[linear-gradient(110deg,#251842_30%,#3a2a66_50%,#251842_70%)] bg-[length:200%_100%] px-6 text-center animate-shimmer"
+                className="nb-stripes flex h-full w-full animate-stripes items-center justify-center p-6"
                 role="status"
               >
-                {status === "waiting" ? (
-                  <>
-                    <span className="font-hand text-4xl text-blush">starting in {cooldownLeft}s</span>
-                    <span className="max-w-[17rem] text-sm leading-relaxed text-lavender">
-                      The free drawing service allows one portrait every 45 seconds.
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-hand text-4xl text-blush">drawing her...</span>
-                    <span className="text-sm tabular-nums text-lavender">
-                      {elapsed}s {elapsed > 25 ? "(busy right now, still going)" : "(usually 10 to 30 seconds)"}
-                    </span>
-                  </>
-                )}
+                <div className="nb-card max-w-[17rem] px-5 py-4 text-center">
+                  {status === "waiting" ? (
+                    <>
+                      <p className="font-display text-2xl tabular-nums">Starting in {cooldownLeft}s</p>
+                      <p className="mt-2 text-sm leading-relaxed text-neutral-700">
+                        The free drawing service allows one portrait every 45 seconds.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display text-2xl">Drawing her</p>
+                      <p className="mt-2 text-sm tabular-nums text-neutral-700">
+                        {elapsed}s {elapsed > 25 ? "(busy right now, still going)" : "(usually 10 to 30 seconds)"}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             )}
             {status === "error" && (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-dusk p-6 text-center" role="alert">
-                <p className="text-lg font-semibold text-film">The portrait didn't come back.</p>
-                <p className="max-w-[18rem] text-sm leading-relaxed text-lavender">
+              <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center" role="alert">
+                <p className="font-display text-2xl">The portrait didn't come back.</p>
+                <p className="max-w-[18rem] text-sm leading-relaxed text-neutral-700">
                   The drawing service is busy or timed out. Your answers are kept, so trying again
                   takes one tap.
                 </p>
-                <button type="button" onClick={drawAgain} className="btn-primary px-6 py-3 text-sm">
-                  <RefreshCw className="h-4 w-4" aria-hidden />
+                <button type="button" onClick={drawAgain} className="nb-btn-pink text-sm">
+                  <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
                   Try again
                 </button>
               </div>
@@ -169,69 +172,66 @@ export default function Result({ answers, onRestart, onEdit }) {
         </div>
 
         <div className="max-w-lg">
-          <h1 className="text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-5xl">
+          <h1 className="font-display text-[clamp(2.4rem,8vw,3.75rem)] leading-[1.05]">
             {status === "ready" ? "Here she is." : status === "error" ? "Almost there." : "She's on her way."}
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-lavender">
+          <p className="mt-4 text-lg leading-relaxed text-neutral-700">
             Not quite her? Draw her again for a new take on the same answers, or change an answer.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             {status === "ready" ? (
-              <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
-                <Download className="h-5 w-5" aria-hidden />
+              <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="nb-btn-pink">
+                <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
                 Open full size
               </a>
             ) : (
-              <button type="button" disabled className="btn-primary">
-                <Download className="h-5 w-5" aria-hidden />
+              <button type="button" disabled className="nb-btn-pink">
+                <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
                 Open full size
               </button>
             )}
-            <button
-              type="button"
-              onClick={drawAgain}
-              disabled={busy || cooldownLeft > 0}
-              className="btn-quiet tabular-nums disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden />
+            <button type="button" onClick={drawAgain} disabled={busy || cooldownLeft > 0} className="nb-btn-white tabular-nums">
+              <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
               {!busy && cooldownLeft > 0 ? `Draw her again in ${cooldownLeft}s` : "Draw her again"}
             </button>
-            <button type="button" onClick={share} className="btn-quiet">
-              <Share2 className="h-4 w-4" aria-hidden />
+            <button type="button" onClick={share} className="nb-btn-white">
+              <Share2 className="h-4 w-4" strokeWidth={3} aria-hidden />
               Share
             </button>
           </div>
-          <p className="mt-3 text-sm text-lavender/80">
-            Full size opens in a new tab to save. Seeing a yellow "limit reached" card? Wait for the
-            countdown, then draw her again.
+          <p className="mt-4 text-sm text-neutral-600">
+            Full size opens in a new tab to save. Got a Pollinations "limit" card instead of her? The
+            free service is busy. Wait for the countdown, then draw her again.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 text-lavender hover:text-film">
+            <button type="button" onClick={onEdit} className={link}>
               <PencilLine className="h-4 w-4" aria-hidden />
               Change answers
             </button>
-            <button type="button" onClick={onRestart} className="inline-flex items-center gap-1.5 text-lavender hover:text-film">
+            <button type="button" onClick={onRestart} className={link}>
               <RotateCcw className="h-4 w-4" aria-hidden />
               Start over
             </button>
           </div>
 
           {prompt && (
-            <details className="mt-10 border-t border-twilight pt-5 text-sm">
-              <summary className="cursor-pointer font-medium text-blush">See the description we sent</summary>
-              <p className="mt-3 leading-relaxed text-lavender">{prompt.positive}</p>
+            <details className="nb-card group mt-10 overflow-hidden text-sm">
+              <summary className="cursor-pointer list-none px-4 py-3 font-bold group-open:border-b-3 group-open:border-ink group-open:bg-pink-soft [&::-webkit-details-marker]:hidden">
+                See the description we sent
+              </summary>
+              <p className="px-4 py-3 leading-relaxed text-neutral-700">{prompt.positive}</p>
             </details>
           )}
 
-          <p className="mt-10 text-sm text-lavender">
+          <p className="mt-8 text-sm text-neutral-700">
             Enjoying it?{" "}
-            <a href={LINKS.feedback} target="_blank" rel="noopener noreferrer" className="text-blush underline underline-offset-4 hover:text-film">
+            <a href={LINKS.feedback} target="_blank" rel="noopener noreferrer" className={link}>
               Tell me what to add
             </a>{" "}
             or{" "}
-            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="text-blush underline underline-offset-4 hover:text-film">
+            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={link}>
               star the repo
             </a>
             .

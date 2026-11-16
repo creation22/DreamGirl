@@ -4,43 +4,45 @@
 
 @layer base {
   html {
-    background: #170f2e;
-    color-scheme: dark;
+    background: #fff;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-night font-sans text-film antialiased;
-    font-optical-sizing: auto;
+    @apply bg-white font-sans text-ink antialiased;
   }
   ::selection {
-    background: #ff4f87;
-    color: #170f2e;
+    background: #ff5fa2;
+    color: #000;
   }
   :focus-visible {
-    outline: 2px solid #ffc9d9;
+    outline: 3px solid #d6116a;
     outline-offset: 3px;
-    border-radius: 6px;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose px-7 py-3.5 text-base font-bold text-night
-      transition-[transform,background-color] duration-150 ease-out
-      hover:bg-blush active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-twilight disabled:text-lavender;
+  /* Buttons lift on hover and press flat into their shadow on click. */
+  .nb-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border-3 border-ink px-6 py-3 font-bold text-ink shadow-nb
+      transition-[transform,box-shadow] duration-100 ease-out
+      hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-nb-hover
+      active:translate-x-1 active:translate-y-1 active:shadow-none
+      disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-neutral-400 disabled:bg-neutral-100 disabled:text-neutral-500 disabled:shadow-none;
   }
-  .btn-quiet {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-twilight px-5 py-3 text-sm font-medium text-blush
-      transition-[transform,border-color,background-color] duration-150 ease-out
-      hover:border-lavender hover:bg-dusk active:scale-[0.97];
+  .nb-btn-pink {
+    @apply nb-btn bg-pink;
   }
-  /* The instant-photo frame: thin sides, a deeper bottom edge for the caption. */
-  .photo {
-    @apply bg-film p-2.5 pb-0 shadow-photo sm:p-3 sm:pb-0;
-    border-radius: 3px;
+  .nb-btn-white {
+    @apply nb-btn bg-white;
   }
-  .photo-caption {
-    @apply px-1 pb-3 pt-2 font-hand text-xl leading-tight text-ink sm:text-2xl;
+  .nb-card {
+    @apply rounded-xl border-3 border-ink bg-white shadow-nb;
+  }
+  /* Diagonal pink stripes for the "drawing" state. */
+  .nb-stripes {
+    background-image: repeating-linear-gradient(-45deg, #ffc6df 0 14px, #fff0f6 14px 28px);
+    background-size: 56px 56px;
   }
 }
 
