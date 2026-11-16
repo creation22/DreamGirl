@@ -8,10 +8,10 @@ import { LINKS } from "../constants/links";
 const HEART =
   "M254.791,33.251c-46.555,0-76.089,51.899-83.079,51.899c-6.111,0-34.438-51.899-83.082-51.899c-47.314,0-85.947,39.021-88.476,86.27c-1.426,26.691,7.177,47.001,19.304,65.402c24.222,36.76,130.137,125.248,152.409,125.248c22.753,0,127.713-88.17,152.095-125.247c12.154-18.483,20.731-38.711,19.304-65.402C340.738,72.272,302.107,33.251,254.791,33.251";
 
-export function Heart({ className = "" }) {
+export function Heart({ className = "", stroke = "#000" }) {
   return (
     <svg viewBox="-14 -14 371 371" className={className} aria-hidden>
-      <path d={HEART} fill="#FF5FA2" stroke="#000" strokeWidth="26" strokeLinejoin="round" />
+      <path d={HEART} fill="#FF5FA2" stroke={stroke} strokeWidth="26" strokeLinejoin="round" />
     </svg>
   );
 }

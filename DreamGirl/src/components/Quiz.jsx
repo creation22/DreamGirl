@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Check, PenLine } from "lucide-react";
 import { Header } from "./Chrome";
 import { questions } from "../constants/question";
+import { NIGHT } from "../constants/night";
 import { checkText } from "../utils/moderation";
 
 const EASE_OUT = [0.22, 1, 0.36, 1];
@@ -234,6 +235,12 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
         {/* Running list of answers. Desktop only. */}
         <aside className="hidden lg:block" aria-label="Your answers so far">
           <div className="nb-card sticky top-8 overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden border-b-3 border-ink bg-ink">
+              <img src={NIGHT.glow} alt="" className="h-full w-full object-cover object-[50%_30%]" />
+              <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-5 pb-3 pt-8 text-sm font-medium text-white">
+                {progress < 10 ? "Still a glow. Keep describing her." : "Ready to step out of the light."}
+              </p>
+            </div>
             <div className="flex items-baseline justify-between border-b-3 border-ink bg-pink-soft px-5 py-3">
               <h2 className="font-bold">Your answers</h2>
               <span className="font-display text-xl">{progress}/10</span>

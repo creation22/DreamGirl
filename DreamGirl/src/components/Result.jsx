@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AtSign, Download, PencilLine, RefreshCw, RotateCcw, Share2, Trash2 } from "lucide-react";
 import { Header, Photo } from "./Chrome";
 import { LINKS } from "../constants/links";
+import { NIGHT } from "../constants/night";
 import { captionFor } from "../constants/question";
 import { attachUsername, generatePortrait, removePortrait } from "../lib/api";
 import { forgetOwned, rememberOwned } from "../lib/me";
@@ -172,10 +173,11 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
               />
             )}
             {loading && (
-              <div className="nb-stripes flex h-full w-full animate-stripes items-center justify-center p-6" role="status">
-                <div className="nb-card max-w-[17rem] px-5 py-4 text-center">
-                  <p className="font-display text-2xl">Drawing her</p>
-                  <p className="mt-2 text-sm tabular-nums text-neutral-700">
+              <div className="relative h-full w-full bg-ink" role="status">
+                <img src={NIGHT.glow} alt="" className="h-full w-full animate-pulse object-cover object-[50%_30%] [animation-duration:2.6s]" />
+                <div className="nb-card absolute inset-x-4 bottom-4 px-4 py-3">
+                  <p className="font-display text-xl">She's stepping out of the light</p>
+                  <p className="mt-1 text-sm tabular-nums text-neutral-700">
                     {elapsed}s {elapsed > 20 ? "(almost there)" : "(usually 5 to 20 seconds)"}
                   </p>
                 </div>
