@@ -84,12 +84,13 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
         return;
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const n = Number(e.key);
+      // 1-9 pick the first nine answers, 0 the tenth.
+      const idx = e.key === "0" ? 9 : /^[1-9]$/.test(e.key) ? Number(e.key) - 1 : -1;
       // preventDefault so the digit isn't typed into the text box that may open.
-      if (n >= 1 && n <= q.options.length) {
+      if (idx >= 0 && idx < q.options.length) {
         e.preventDefault();
-        choose(q.options[n - 1]);
-      } else if (q.custom && n === q.options.length + 1) {
+        choose(q.options[idx]);
+      } else if (q.custom && idx === q.options.length) {
         e.preventDefault();
         openCustom();
       }
@@ -138,7 +139,7 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                 {q.question}
               </h1>
 
-              <div role="radiogroup" aria-labelledby="question" className="mt-9 grid gap-4 sm:grid-cols-2">
+              <div role="radiogroup" aria-labelledby="question" className="mt-9 grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {q.options.map((option, n) => {
                   const selected = value === option && !showCustom;
                   return (
@@ -148,7 +149,7 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                       role="radio"
                       aria-checked={selected}
                       onClick={() => choose(option)}
-                      className={`flex items-center gap-4 rounded-xl border-3 border-ink px-4 py-4 text-left text-lg font-semibold transition-[transform,box-shadow,background-color] duration-100 ease-out ${
+                      className={`flex items-center gap-3 rounded-xl border-3 border-ink px-3 py-3 text-left text-[15px] font-semibold leading-snug transition-[transform,box-shadow,background-color] duration-100 ease-out sm:px-4 sm:text-base ${
                         selected
                           ? "translate-x-1 translate-y-1 bg-pink shadow-none"
                           : "bg-white shadow-nb hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-pink-wash hover:shadow-nb-hover active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -156,11 +157,11 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                     >
                       <span
                         aria-hidden
-                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-3 border-ink text-sm font-bold ${
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border-3 border-ink text-xs font-bold ${
                           selected ? "bg-white" : "bg-pink-soft"
                         }`}
                       >
-                        {selected ? <Check className="h-4 w-4" strokeWidth={3.5} /> : n + 1}
+                        {selected ? <Check className="h-4 w-4" strokeWidth={3.5} /> : n < 9 ? n + 1 : n === 9 ? 0 : "·"}
                       </span>
                       {option}
                     </button>
@@ -173,11 +174,11 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
                     role="radio"
                     aria-checked={showCustom}
                     onClick={openCustom}
-                    className={`flex items-center gap-4 rounded-xl border-3 border-dashed border-ink px-4 py-4 text-left text-lg font-semibold transition-colors duration-100 ${
+                    className={`flex items-center gap-3 rounded-xl border-3 border-dashed border-ink px-3 py-3 text-left text-[15px] font-semibold leading-snug transition-colors duration-100 sm:px-4 sm:text-base ${
                       showCustom ? "bg-pink-soft" : "bg-white hover:bg-pink-wash"
                     }`}
                   >
-                    <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-3 border-ink bg-white">
+                    <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border-3 border-ink bg-white">
                       <PenLine className="h-4 w-4" strokeWidth={2.5} />
                     </span>
                     Something else
@@ -226,7 +227,7 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
             </button>
           </div>
           <p className="mt-4 hidden text-right text-sm text-neutral-600 sm:block">
-            Press 1 to {q.options.length + (q.custom ? 1 : 0)} to pick, Enter to continue.
+            {q.options.length + (q.custom ? 1 : 0) <= 9 ? `Press 1 to ${q.options.length + (q.custom ? 1 : 0)} to pick` : "Press 1 to 9 or 0 to pick"}, Enter to continue.
           </p>
         </div>
 
