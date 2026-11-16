@@ -1,9 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    background: #170f2e;
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-night font-sans text-film antialiased;
+    font-optical-sizing: auto;
+  }
+  ::selection {
+    background: #ff4f87;
+    color: #170f2e;
+  }
+  :focus-visible {
+    outline: 2px solid #ffc9d9;
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
 
-body {
-  font-family: 'Inter', sans-serif;
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose px-7 py-3.5 text-base font-bold text-night
+      transition-[transform,background-color] duration-150 ease-out
+      hover:bg-blush active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-twilight disabled:text-lavender;
+  }
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-twilight px-5 py-3 text-sm font-medium text-blush
+      transition-[transform,border-color,background-color] duration-150 ease-out
+      hover:border-lavender hover:bg-dusk active:scale-[0.97];
+  }
+  /* The instant-photo frame: thin sides, a deeper bottom edge for the caption. */
+  .photo {
+    @apply bg-film p-2.5 pb-0 shadow-photo sm:p-3 sm:pb-0;
+    border-radius: 3px;
+  }
+  .photo-caption {
+    @apply px-1 pb-3 pt-2 font-hand text-xl leading-tight text-ink sm:text-2xl;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

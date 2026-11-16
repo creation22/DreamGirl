@@ -1,67 +1,73 @@
+// Each question writes one field of the answers object that generatePrompt reads.
+// `custom: true` adds a "Something else" choice with a free-text box.
 export const questions = [
   {
-    id: 1,
-    question: "What's the overall vibe or aura she gives off ?",
-    type: "options",
-    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Charming & Irresistible", "Custom"],
-    allowCustom: true,
+    key: "aura",
+    question: "What vibe does she give off?",
+    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Charming & Irresistible"],
+    custom: true,
   },
   {
-    id: 2,
-    question: "What’s her ethnic background?",
-    type: "options",
-    options: ["Indian", "White/Caucasian", "Black/African", "Asian", "Custom"],
-    allowCustom: true,
+    key: "race",
+    question: "What's her ethnic background?",
+    options: ["Indian", "White/Caucasian", "Black/African", "Asian", "Latina", "Middle Eastern"],
+    custom: true,
   },
   {
-    id: 3,
+    key: "bodyType",
     question: "What's her body type?",
-    type: "options",
     options: ["Slim", "Athletic", "Curvy", "Thick", "Plus Size"],
   },
   {
-    id: 4,
+    key: "skinTone",
     question: "What's her skin tone?",
-    type: "options",
-    options: ["Fair/Light", "Medium/Olive", "Brown", "Dark", "Tan"],
+    options: ["Fair/Light", "Medium/Olive", "Tan", "Brown", "Dark"],
   },
   {
-    id: 5,
-    question: "How would you describe her facial structure?",
-    type: "options",
-    options: ["Oval", "Round", "Square", "Diamond", "Angular"],
+    key: "facialStructure",
+    question: "What shape is her face?",
+    options: ["Oval", "Round", "Heart Shaped", "Diamond", "Square", "Angular"],
   },
   {
-    id: 6,
-    question: "What kind of outfit is she wearing?",
-    type: "options",
-    options: ["Elegant", "Casual", "Trendy", "Traditional/Cultural", "Custom"],
-    allowCustom: true,
+    key: "outfit",
+    question: "What is she wearing?",
+    options: ["Elegant", "Casual", "Trendy", "Traditional/Cultural", "Sporty"],
+    custom: true,
   },
   {
-    id: 7,
-    question: "What hairstyle does she have?",
-    type: "options",
-    options: ["Long & Straight", "Curly", "Short Bob", "Braided"],
+    key: "hairstyle",
+    question: "How is her hair?",
+    options: ["Long & Straight", "Curly", "Wavy", "Short Bob", "Braided", "Ponytail"],
+    custom: true,
   },
   {
-    id: 8,
-    question: "What kind of facial expression does she have?",
-    type: "options",
-    options: ["Smiling", "Serious", "Shy", "Playful", "Custom"],
-    allowCustom: true,
+    key: "facialExpression",
+    question: "What's her expression?",
+    options: ["Smiling", "Serious", "Shy", "Playful"],
+    custom: true,
   },
   {
-    id: 9,
+    key: "accessories",
     question: "Any accessories?",
-    type: "options",
-    options: ["Glasses", "Jewelry", "Piercing/Tattoos", "Hats/cap", "None"],
-    allowCustom: true,
+    options: ["None", "Glasses", "Jewelry", "Piercings/Tattoos", "Hat/Cap"],
+    custom: true,
   },
   {
-    id: 10,
-    question: "Choose an image generation style",
-    type: "options",
-    options: ["Anime", "3D Render", "Semi-Realistic", "Cartoon", "Fantasy"],
+    key: "imageGenerationStyle",
+    question: "How should she be drawn?",
+    options: ["Realistic", "Semi-Realistic", "Anime", "3D Render", "Cartoon", "Fantasy"],
   },
 ];
+
+// A short handwritten-style caption built from the answers, e.g.
+// "curly, smiling, glasses, anime"
+// Pass `all` to note every answer (the quiz's running notes).
+const CAPTION_KEYS = ["hairstyle", "facialExpression", "accessories", "outfit", "imageGenerationStyle"];
+export function captionFor(answers, { all = false } = {}) {
+  const keys = all ? questions.map((q) => q.key) : CAPTION_KEYS;
+  return keys
+    .map((k) => answers?.[k]?.trim())
+    .filter((v) => v && v.toLowerCase() !== "none")
+    .map((v) => v.toLowerCase())
+    .join(", ");
+}

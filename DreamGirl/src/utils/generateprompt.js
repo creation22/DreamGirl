@@ -1,131 +1,138 @@
 /**
- * Generates a high-quality prompt string based on the provided answers.
- * This prompt is optimized for AI image generation with detailed descriptors.
+ * Builds the image prompt from the quiz answers.
+ * Known options expand into richer descriptors; anything typed in
+ * "Something else" is passed through as written.
  *
- * @param {Object} answers - Object containing user answers.
- * @returns {string} - The final generated prompt.
+ * @param {Object} answers - keyed by the `key` of each question.
+ * @returns {{positive: string, negative: string} | null}
  */
 export function generatePrompt(answers) {
   if (!answers || Object.keys(answers).length === 0) {
     return null;
   }
 
-  // Enhanced mappings for better prompt quality
   const auraMap = {
     "confident & classy": "confident, elegant, sophisticated, poised, graceful",
     "sporty & rational": "athletic, determined, focused, strong, energetic",
     "mysterious & magnetic": "enigmatic, alluring, captivating, intriguing, mesmerizing",
-    "sexy & alluring": "sensual, attractive, charming, seductive, gorgeous"
+    "charming & irresistible": "charming, warm, magnetic smile, approachable, radiant",
   };
 
   const raceMap = {
-    "indian": "South Asian, Indian features, beautiful brown skin",
-    "white/caucasian": "Caucasian, European features, fair complexion",
+    indian: "South Asian, Indian features, beautiful brown skin",
+    "white/caucasian": "Caucasian, European features",
     "black/african": "African, beautiful dark skin, strong features",
-    "asian": "East Asian features, smooth skin, elegant bone structure"
+    asian: "East Asian features, smooth skin, elegant bone structure",
+    latina: "Latina, Latin American features, warm complexion",
+    "middle eastern": "Middle Eastern features, striking dark eyes",
   };
 
   const bodyTypeMap = {
-    "slim": "slender, lean, graceful figure, elegant proportions",
-    "athletic": "fit, toned, muscular definition, healthy athletic build",
-    "curvy": "curvaceous, hourglass figure, feminine curves, well-proportioned",
-    "thick": "voluptuous, full figure, beautiful curves, confident posture",
-    "plus size": "full-figured, beautiful curves, confident, radiant"
+    slim: "slender, lean, graceful figure, elegant proportions",
+    athletic: "fit, toned, healthy athletic build",
+    curvy: "curvaceous, hourglass figure, well-proportioned",
+    thick: "full figure, beautiful curves, confident posture",
+    "plus size": "full-figured, beautiful curves, confident, radiant",
   };
 
   const skinToneMap = {
     "fair/light": "fair skin, porcelain complexion, smooth texture",
     "medium/olive": "olive skin tone, warm undertones, healthy glow",
-    "brown": "beautiful brown skin, rich complexion, natural radiance",
-    "dark": "gorgeous dark skin, deep rich tone, luminous complexion",
-    "tan": "sun-kissed skin, golden tan, warm glow"
+    tan: "sun-kissed skin, golden tan, warm glow",
+    brown: "beautiful brown skin, rich complexion, natural radiance",
+    dark: "gorgeous dark skin, deep rich tone, luminous complexion",
   };
 
   const facialStructureMap = {
-    "oval": "oval face shape, balanced proportions, classic beauty",
-    "round": "round face, soft features, youthful appearance",
-    "square": "strong jawline, defined features, striking bone structure",
-    "diamond": "diamond face shape, high cheekbones, elegant angles",
-    "heart shaped": "heart-shaped face, delicate chin, prominent cheekbones"
+    oval: "oval face shape, balanced proportions, classic beauty",
+    round: "round face, soft features, youthful appearance",
+    "heart shaped": "heart-shaped face, delicate chin, prominent cheekbones",
+    diamond: "diamond face shape, high cheekbones, elegant angles",
+    square: "strong jawline, defined features, striking bone structure",
+    angular: "angular face, sharp cheekbones, chiseled features",
   };
 
   const outfitMap = {
-    "elegant": "elegant dress, sophisticated attire, refined fashion, luxurious fabric",
-    "casual": "stylish casual wear, comfortable yet fashionable, modern outfit",
-    "trendy": "trendy fashion, contemporary style, fashionable clothing, modern design",
-    "traditional": "traditional attire, cultural dress, authentic style, heritage fashion"
+    elegant: "elegant dress, sophisticated attire, refined fashion, luxurious fabric",
+    casual: "stylish casual wear, comfortable yet fashionable, modern outfit",
+    trendy: "trendy fashion, contemporary style, modern design",
+    "traditional/cultural": "traditional attire, cultural dress, authentic heritage fashion",
+    sporty: "sporty athleisure outfit, fitted jacket, sneakers style",
   };
 
   const hairstyleMap = {
     "long & straight": "long straight hair, silky smooth texture, flowing locks",
-    "curly": "beautiful curly hair, natural curls, voluminous texture, bouncy waves",
+    curly: "beautiful curly hair, natural curls, voluminous texture",
+    wavy: "soft wavy hair, loose beach waves",
     "short bob": "stylish bob cut, modern short hairstyle, sleek and chic",
-    "braided": "intricate braids, detailed hair work, artistic braiding, textured style"
+    braided: "intricate braids, detailed hair work, textured style",
+    ponytail: "high sleek ponytail",
   };
 
   const expressionMap = {
-    "smiling": "warm genuine smile, bright eyes, joyful expression, radiant happiness",
-    "serious": "serious expression, focused gaze, determined look, intense eyes",
-    "shy": "shy smile, gentle expression, soft eyes, modest demeanor",
-    "playful": "playful expression, mischievous smile, lively eyes, fun personality"
+    smiling: "warm genuine smile, bright eyes, joyful expression",
+    serious: "serious expression, focused gaze, intense eyes",
+    shy: "shy smile, gentle expression, soft eyes",
+    playful: "playful expression, mischievous smile, lively eyes",
   };
 
   const accessoryMap = {
-    "glasses": "stylish eyewear, fashionable glasses, intellectual charm",
-    "jewelry": "elegant jewelry, beautiful accessories, sparkling details",
-    "piercing/tattoos": "artistic tattoos, stylish piercings, body art, unique style",
-    "none": ""
+    none: "",
+    glasses: "stylish eyewear, fashionable glasses",
+    jewelry: "elegant jewelry, delicate earrings and necklace",
+    "piercings/tattoos": "artistic tattoos, stylish piercings",
+    "hat/cap": "stylish hat",
   };
 
-  // Get enhanced descriptions
-  const aura = auraMap[answers.aura?.toLowerCase()] || answers.aura || "confident, beautiful";
-  const race = raceMap[answers.race?.toLowerCase()] || answers.race || "mixed heritage, beautiful features";
-  const bodyType = bodyTypeMap[answers.bodyType?.toLowerCase()] || answers.bodyType || "athletic build";
-  const skinTone = skinToneMap[answers.skinTone?.toLowerCase()] || answers.skinTone || "healthy skin tone";
-  const facialStructure = facialStructureMap[answers.facialStructure?.toLowerCase()] || answers.facialStructure || "beautiful face shape";
-  const outfit = outfitMap[answers.outfit?.toLowerCase()] || answers.outfit || "stylish clothing";
-  const hairstyle = hairstyleMap[answers.hairstyle?.toLowerCase()] || answers.hairstyle || "beautiful hairstyle";
-  const facialExpression = expressionMap[answers.facialExpression?.toLowerCase()] || answers.facialExpression || "pleasant expression";
-  const accessories = accessoryMap[answers.accessories?.toLowerCase()] || answers.accessories || "";
-  const style = answers.imageGenerationStyle || "realistic";
+  const pick = (map, value, fallback) => {
+    if (!value || !value.trim()) return fallback;
+    return map[value.trim().toLowerCase()] ?? value.trim();
+  };
 
-  // Build the enhanced prompt
-  let prompt = `A stunning beautiful woman, ${aura}, ${race}, ${bodyType}, ${skinTone}, ${facialStructure}, wearing ${outfit}, ${hairstyle}, ${facialExpression}`;
+  const aura = pick(auraMap, answers.aura, "confident, beautiful");
+  const race = pick(raceMap, answers.race, "mixed heritage");
+  const bodyType = pick(bodyTypeMap, answers.bodyType, "athletic build");
+  const skinTone = pick(skinToneMap, answers.skinTone, "healthy skin tone");
+  const facialStructure = pick(facialStructureMap, answers.facialStructure, "beautiful face shape");
+  const outfit = pick(outfitMap, answers.outfit, "stylish clothing");
+  const hairstyle = pick(hairstyleMap, answers.hairstyle, "beautiful hairstyle");
+  const facialExpression = pick(expressionMap, answers.facialExpression, "pleasant expression");
+  const accessories = pick(accessoryMap, answers.accessories, "");
+  const style = (answers.imageGenerationStyle || "realistic").toLowerCase();
 
-  // Add accessories if present
-  if (accessories && accessories.trim() !== "") {
+  let prompt = `Portrait of a stunning beautiful woman, ${aura}, ${race}, ${bodyType}, ${skinTone}, ${facialStructure}, wearing ${outfit}, ${hairstyle}, ${facialExpression}`;
+
+  if (accessories) {
     prompt += `, ${accessories}`;
   }
 
-  // Add style-specific quality modifiers
-  switch (style.toLowerCase()) {
-    case "anime":
-      prompt += `, anime art style, detailed anime illustration, cel shading, vibrant colors, studio quality, masterpiece, highly detailed, beautiful anime girl, perfect anatomy, flawless skin`;
-      break;
-    case "3d render":
-      prompt += `, 3D rendered, high-quality digital art, octane render, unreal engine, smooth lighting, perfect subsurface scattering, detailed textures, photorealistic 3D model`;
-      break;
-    case "cartoon":
-      prompt += `, cartoon style illustration, stylized art, vibrant colors, clean lines, professional cartoon art, detailed character design, expressive features`;
-      break;
-    case "realistic":
-      prompt += `, photorealistic, ultra-realistic, professional photography, studio lighting, sharp focus, high resolution, DSLR quality, perfect skin texture, natural lighting, masterpiece quality`;
-      break;
-    case "semi-realistic":
-      prompt += `, semi-realistic art, digital painting, artistic rendering, soft realistic style, detailed illustration, professional digital art, beautiful rendering`;
-      break;
-    default:
-      prompt += `, high quality artwork, detailed, professional, masterpiece`;
-  }
-
-  // Add universal quality enhancers
-  prompt += `, perfect composition, beautiful lighting, high detail, 8K resolution, trending on artstation, award-winning, flawless, stunning, gorgeous, breathtaking beauty`;
-
-  // Add negative prompt elements to avoid
-  const negativeElements = "ugly, deformed, blurry, low quality, pixelated, distorted, amateur, bad anatomy, weird proportions, extra limbs, missing features";
-
-  return {
-    positive: prompt.trim(),
-    negative: negativeElements
+  const styleMods = {
+    realistic:
+      "photorealistic, professional photography, studio lighting, sharp focus, DSLR quality, natural skin texture",
+    "semi-realistic":
+      "semi-realistic digital painting, soft realistic style, detailed illustration, beautiful rendering",
+    anime:
+      "anime art style, detailed anime illustration, cel shading, vibrant colors, studio quality",
+    "3d render":
+      "3D render, octane render, unreal engine, soft lighting, subsurface scattering, detailed textures",
+    cartoon:
+      "cartoon illustration, stylized character design, clean lines, vibrant colors, expressive features",
+    fantasy:
+      "fantasy art, ethereal glow, magical atmosphere, intricate details, painterly, enchanted setting",
   };
+
+  prompt += `, ${styleMods[style] ?? `${style} style, high quality artwork`}`;
+  prompt += ", perfect composition, beautiful lighting, high detail, masterpiece";
+
+  const negative =
+    "ugly, deformed, blurry, low quality, pixelated, distorted, bad anatomy, extra limbs, missing features, watermark, text";
+
+  return { positive: prompt, negative };
+}
+
+// Pollinations draws the image straight from a URL. A new seed gives a new drawing.
+export function imageUrlFor(promptData, seed) {
+  const prompt = encodeURIComponent(promptData.positive);
+  const negative = encodeURIComponent(promptData.negative);
+  return `https://image.pollinations.ai/prompt/${prompt}?width=768&height=768&model=flux&seed=${seed}&enhance=true&nologo=true&negative=${negative}`;
 }

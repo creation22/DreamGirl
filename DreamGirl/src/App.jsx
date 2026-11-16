@@ -1,42 +1,48 @@
-import { useState } from 'react'
-import { TypewriterEffectDemo } from './components/TypeWriterUse'
-import { SparklesPreview } from './components/Question'
-import GenerateImage from './utils/generateImage'
-import { Analytics } from "@vercel/analytics/react"
-function App() {
-  const [currentPage, setCurrentPage] = useState('welcome') // 'welcome', 'questions', 'result'
-  const [userAnswers, setUserAnswers] = useState({})
+import { useEffect, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
+import Landing from "./components/Landing";
+import Quiz from "./components/Quiz";
+import Result from "./components/Result";
 
-  const handleStartQuestions = () => {
-    setCurrentPage('questions')
-  }
+export default function App() {
+  const [page, setPage] = useState("landing"); // landing | quiz | result
+  const [answers, setAnswers] = useState({});
 
-  const handleQuestionsComplete = (answers) => {
-    setUserAnswers(answers)
-    setCurrentPage('result')
-  }
-
-  const handleRestart = () => {
-    setCurrentPage('welcome')
-    setUserAnswers({})
-  }
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [page]);
 
   return (
     <>
-      <Analytics/>
-      {currentPage === 'welcome' && (
-        <TypewriterEffectDemo onStart={handleStartQuestions} />
+      <Analytics />
+      {page === "landing" && (
+        <Landing
+          onStart={() => {
+            setAnswers({});
+            setPage("quiz");
+          }}
+        />
       )}
-      
-      {currentPage === 'questions' && (
-        <SparklesPreview onComplete={handleQuestionsComplete} />
+      {page === "quiz" && (
+        <Quiz
+          initialAnswers={answers}
+          onExit={() => setPage("landing")}
+          onComplete={(a) => {
+            setAnswers(a);
+            setPage("result");
+          }}
+        />
       )}
-      
-      {currentPage === 'result' && (
-        <GenerateImage answers={userAnswers} onRestart={handleRestart} />
+      {page === "result" && (
+        <Result
+          answers={answers}
+          onEdit={() => setPage("quiz")}
+          onRestart={() => {
+            setAnswers({});
+            setPage("landing");
+          }}
+        />
       )}
     </>
-  )
+  );
 }
-
-export default App
