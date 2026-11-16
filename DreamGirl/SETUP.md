@@ -58,3 +58,7 @@ Typed answers that mention minors or explicit content are refused in the quiz an
 the server. Every prompt asks for a clothed, safe-for-work portrait. Three reports from
 different visitors hide a portrait. To hide something by hand, see the bottom of
 `supabase/schema.sql`.
+
+## Prompt log
+
+Every request to draw a portrait is kept in the `prompt_log` table: the ten answers, the exact prompt sent to Surplus, the username as typed, a hashed IP, and what happened (`drawn`, `blocked`, `limited`, `failed`, `invalid`). Blocked and failed requests are kept too. Read it in Supabase (Table Editor, or the queries at the bottom of `supabase/schema.sql`). Running locally without Supabase, it goes to `.dev-data/prompt_log.jsonl` instead.

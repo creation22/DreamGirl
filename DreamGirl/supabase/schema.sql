@@ -36,8 +36,29 @@ create table if not exists public.portrait_reports (
   primary key (portrait_id, ip_hash)
 );
 
+-- Every request to draw a portrait, kept for good: what was asked, the exact prompt sent
+-- to Surplus, and what happened. Includes requests that were blocked, rate-limited or
+-- failed, which never become portraits. Only reachable with the secret key.
+create table if not exists public.prompt_log (
+  id           bigint generated always as identity primary key,
+  created_at   timestamptz not null default now(),
+  status       text not null check (status in ('drawn', 'blocked', 'limited', 'failed', 'invalid')),
+  reason       text,                    -- why it was blocked, limited or failed
+  username     text,                    -- as typed, unverified
+  ip_hash      text not null,           -- salted hash, never the raw IP
+  answers      jsonb,                   -- the ten answers (as sent, for invalid requests)
+  prompt       text,                    -- the text sent to Surplus
+  portrait_id  uuid references public.portraits (id) on delete set null,
+  model        text,
+  cost_micro   bigint
+);
+
+create index if not exists prompt_log_recent on public.prompt_log (created_at desc);
+create index if not exists prompt_log_by_status on public.prompt_log (status, created_at desc);
+
 alter table public.portraits enable row level security;
 alter table public.portrait_reports enable row level security;
+alter table public.prompt_log enable row level security;
 
 create or replace function public.report_portrait(p_id uuid, p_ip_hash text)
 returns void language plpgsql security definer set search_path = public as $$
@@ -73,6 +94,11 @@ revoke execute on function public.spent_since(timestamptz) from public, anon, au
 insert into storage.buckets (id, name, public)
 values ('portraits', 'portraits', true)
 on conflict (id) do nothing;
+
+-- Reading the prompt log:
+--   latest requests:   select created_at, status, username, answers, prompt from prompt_log order by id desc limit 100;
+--   what got blocked:  select created_at, reason, answers from prompt_log where status = 'blocked' order by id desc;
+--   most-picked style: select answers->>'imageGenerationStyle' s, count(*) from prompt_log where status = 'drawn' group by 1 order by 2 desc;
 
 -- Moderating by hand (Table Editor or SQL):
 --   hide a post:       update portraits set hidden = true  where id = '...';

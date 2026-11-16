@@ -34,18 +34,34 @@ export default async function handler(req, res) {
   const store = getStore();
   if (!store) return send(res, 503, { error: "DreamHer isn't fully set up yet." });
 
+  const ipHash = visitorHash(req);
+  // Every request goes into the prompt log, whatever happens to it. Awaited (serverless
+  // functions can freeze once the response is sent), but a log failure never stops a portrait.
+  const entry = { ip_hash: ipHash, username: null, answers: null, prompt: null };
+  const log = (status, extra = {}) =>
+    store.logPrompt({ ...entry, status, ...extra }).catch((e) => console.error("[generate] prompt log", e?.message));
+  const reply = async (status, code, error) => {
+    await log(status, { reason: error });
+    return send(res, code, { error });
+  };
+
   try {
     const body = await readJson(req);
+    if (typeof body.username === "string") entry.username = body.username.trim().slice(0, 40) || null;
+    if (body.answers && typeof body.answers === "object") entry.answers = body.answers;
     const answers = cleanAnswers(body.answers);
-    if (!answers) return send(res, 400, { error: "All 10 answers are needed to draw her." });
+    if (!answers) return reply("invalid", 400, "All 10 answers are needed to draw her.");
+    entry.answers = answers;
+    const prompt = generatePrompt(answers);
+    entry.prompt = prompt.positive;
     const problem = checkAnswers(answers);
-    if (problem) return send(res, 422, { error: problem });
+    if (problem) return reply("blocked", 422, problem);
     const username = body.username ? normalizeHandle(body.username) : null;
     if (body.username && !username) {
-      return send(res, 400, { error: "That doesn't look like an X username. Use letters, numbers and _ (up to 15)." });
+      return reply("invalid", 400, "That doesn't look like an X username. Use letters, numbers and _ (up to 15).");
     }
+    entry.username = username;
 
-    const ipHash = visitorHash(req);
     const now = Date.now();
     const startOfDay = new Date(new Date(now).toISOString().slice(0, 10)).toISOString();
     const [recent, today, spent] = await Promise.all([
@@ -53,12 +69,14 @@ export default async function handler(req, res) {
       store.countSince(ipHash, new Date(now - 86_400_000).toISOString()),
       store.spentSince(startOfDay),
     ]);
-    if (recent >= PER_10_MIN) return send(res, 429, { error: "That's a lot of portraits at once. Take a breather and try again in a few minutes." });
-    if (today >= PER_DAY) return send(res, 429, { error: "You've hit today's portrait limit. Come back tomorrow." });
-    if (spent >= DAILY_BUDGET_MICRO) return send(res, 503, { error: "Today's free portraits are used up. Come back tomorrow." });
+    if (recent >= PER_10_MIN) return reply("limited", 429, "That's a lot of portraits at once. Take a breather and try again in a few minutes.");
+    if (today >= PER_DAY) return reply("limited", 429, "You've hit today's portrait limit. Come back tomorrow.");
+    if (spent >= DAILY_BUDGET_MICRO) return reply("limited", 503, "Today's free portraits are used up. Come back tomorrow.");
 
-    const prompt = generatePrompt(answers);
     const drawn = await drawPortrait(prompt.positive);
+    // Kept on the entry so a failure after this point still logs what Surplus charged.
+    entry.model = drawn.model;
+    entry.cost_micro = drawn.costMicro;
 
     const id = randomUUID();
     const image = await store.uploadImage(id, drawn.bytes, drawn.contentType);
@@ -77,6 +95,7 @@ export default async function handler(req, res) {
       delete_token_hash: sha256(token),
       ip_hash: ipHash,
     });
+    await log("drawn", { portrait_id: id, model: drawn.model, cost_micro: drawn.costMicro });
 
     send(res, 201, {
       item,
@@ -92,9 +111,9 @@ export default async function handler(req, res) {
       prompt: prompt.positive,
     });
   } catch (e) {
-    if (e instanceof SyntaxError) return send(res, 400, { error: "Bad JSON." });
-    if (e instanceof GenerateError || e instanceof StoreError) return send(res, e.status, { error: e.message });
+    if (e instanceof SyntaxError) return reply("invalid", 400, "Bad JSON.");
+    if (e instanceof GenerateError || e instanceof StoreError) return reply("failed", e.status, e.message);
     console.error("[generate] unexpected", e);
-    return send(res, 500, { error: "Something broke on our side. Try again." });
+    return reply("failed", 500, "Something broke on our side. Try again.");
   }
 }

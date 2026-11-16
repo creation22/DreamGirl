@@ -124,7 +124,17 @@ function supabaseStore(url, key) {
     async report(id, ipHash) {
       await rest("/rpc/report_portrait", { method: "POST", body: { p_id: id, p_ip_hash: ipHash } });
     },
+    async logPrompt(entry) {
+      await rest("/prompt_log", { method: "POST", body: entry, prefer: "return=minimal" });
+    },
   };
+}
+
+// Local dev keeps the prompt log in a file you can open: .dev-data/prompt_log.jsonl
+async function appendDevLog(entry) {
+  const { appendFile, mkdir } = await import("node:fs/promises");
+  await mkdir(".dev-data", { recursive: true });
+  await appendFile(".dev-data/prompt_log.jsonl", `${JSON.stringify(entry)}\n`);
 }
 
 function memoryStore() {
@@ -180,6 +190,9 @@ function memoryStore() {
       const n = [...db.reports].filter((k) => k.startsWith(`${id}:`)).length;
       const row = db.rows.find((r) => r.id === id);
       if (row && n >= 3) row.hidden = true;
+    },
+    async logPrompt(entry) {
+      await appendDevLog({ created_at: new Date().toISOString(), ...entry });
     },
   };
 }
