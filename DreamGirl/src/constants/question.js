@@ -1,67 +1,178 @@
+// The ten questions. Each writes one field of the answers object that generatePrompt reads;
+// every option has a matching phrase in utils/generateprompt.js.
+// `custom: true` adds a "Something else" choice with a free-text box.
+// Age has no free text on purpose: every portrait is of an adult woman.
 export const questions = [
   {
-    id: 1,
-    question: "What's the overall vibe or aura she gives off ?",
-    type: "options",
-    options: ["Confident & Classy", "Sporty & Rational", "Mysterious & Magnetic", "Charming & Irresistible", "Custom"],
-    allowCustom: true,
+    key: "aura",
+    question: "What's her vibe?",
+    options: [
+      "Soft & sweet",
+      "Confident & classy",
+      "Mysterious",
+      "Playful & bubbly",
+      "Artsy & dreamy",
+      "Smart & bookish",
+      "Sporty & bold",
+      "Edgy & rebellious",
+      "Calm & grounded",
+      "Glamorous",
+    ],
+    custom: true,
   },
   {
-    id: 2,
-    question: "What’s her ethnic background?",
-    type: "options",
-    options: ["Indian", "White/Caucasian", "Black/African", "Asian", "Custom"],
-    allowCustom: true,
+    key: "race",
+    question: "Where's her family from?",
+    options: [
+      "South Asian",
+      "East Asian",
+      "Southeast Asian",
+      "Black / African",
+      "White / European",
+      "Latina",
+      "Middle Eastern",
+      "Mixed heritage",
+    ],
+    custom: true,
   },
   {
-    id: 3,
-    question: "What's her body type?",
-    type: "options",
-    options: ["Slim", "Athletic", "Curvy", "Thick", "Plus Size"],
+    key: "age",
+    question: "How old is she?",
+    options: ["Early twenties", "Mid twenties", "Late twenties", "Thirties", "Forties"],
   },
   {
-    id: 4,
+    key: "skinTone",
     question: "What's her skin tone?",
-    type: "options",
-    options: ["Fair/Light", "Medium/Olive", "Brown", "Dark", "Tan"],
+    options: ["Porcelain", "Fair", "Light olive", "Golden tan", "Warm brown", "Deep brown", "Ebony"],
   },
   {
-    id: 5,
-    question: "How would you describe her facial structure?",
-    type: "options",
-    options: ["Oval", "Round", "Square", "Diamond", "Angular"],
+    key: "hairstyle",
+    question: "How does she wear her hair?",
+    options: [
+      "Long & straight",
+      "Long waves",
+      "Curly",
+      "Coily afro",
+      "Braids",
+      "High ponytail",
+      "Messy bun",
+      "Bob",
+      "Pixie cut",
+      "With bangs",
+    ],
+    custom: true,
   },
   {
-    id: 6,
-    question: "What kind of outfit is she wearing?",
-    type: "options",
-    options: ["Elegant", "Casual", "Trendy", "Traditional/Cultural", "Custom"],
-    allowCustom: true,
+    key: "hairColor",
+    question: "And its colour?",
+    options: ["Jet black", "Dark brown", "Chestnut", "Auburn", "Copper red", "Honey blonde", "Platinum", "Silver", "Pastel pink"],
+    custom: true,
   },
   {
-    id: 7,
-    question: "What hairstyle does she have?",
-    type: "options",
-    options: ["Long & Straight", "Curly", "Short Bob", "Braided"],
+    key: "outfit",
+    question: "What's she wearing?",
+    options: [
+      "Sundress",
+      "Saree",
+      "Lehenga",
+      "Cosy knit sweater",
+      "Leather jacket",
+      "Little black dress",
+      "Denim & white tee",
+      "Tailored suit",
+      "Athleisure",
+      "Evening gown",
+    ],
+    custom: true,
   },
   {
-    id: 8,
-    question: "What kind of facial expression does she have?",
-    type: "options",
-    options: ["Smiling", "Serious", "Shy", "Playful", "Custom"],
-    allowCustom: true,
+    key: "facialExpression",
+    question: "How is she looking at you?",
+    options: ["Warm smile", "Laughing", "Shy glance", "Playful smirk", "Dreamy", "Serious", "Confident", "Mid-wink"],
+    custom: true,
   },
   {
-    id: 9,
-    question: "Any accessories?",
-    type: "options",
-    options: ["Glasses", "Jewelry", "Piercing/Tattoos", "Hats/cap", "None"],
-    allowCustom: true,
+    key: "setting",
+    question: "Where do you see her?",
+    options: [
+      "Café by the window",
+      "Beach at golden hour",
+      "Rainy city street",
+      "Rooftop at night",
+      "Flower garden",
+      "Old library",
+      "Snowy mountains",
+      "Neon-lit city",
+      "Cosy reading nook",
+      "Plain studio backdrop",
+    ],
+    custom: true,
   },
   {
-    id: 10,
-    question: "Choose an image generation style",
-    type: "options",
-    options: ["Anime", "3D Render", "Semi-Realistic", "Cartoon", "Fantasy"],
+    key: "imageGenerationStyle",
+    question: "How should she be painted?",
+    options: [
+      "Realistic photo",
+      "Cinematic film still",
+      "Vintage film photo",
+      "Soft oil painting",
+      "Watercolour",
+      "Pencil sketch",
+      "Anime",
+      "3D animated",
+      "Comic book",
+      "Fantasy art",
+    ],
   },
 ];
+
+// A short caption for the portrait, e.g. "auburn long waves, laughing, sundress,
+// beach at golden hour, watercolour". Pass `all` to list every answer (the quiz's notes).
+const CAPTION_KEYS = ["hairColor", "hairstyle", "facialExpression", "outfit", "setting", "imageGenerationStyle"];
+export function captionFor(answers, { all = false } = {}) {
+  const keys = all ? questions.map((q) => q.key) : CAPTION_KEYS;
+  const parts = keys.map((k) => answers?.[k]?.trim()).filter(Boolean).map((v) => v.toLowerCase());
+  // "auburn" + "long waves" read better as one item
+  if (!all && answers?.hairColor && answers?.hairstyle) {
+    parts.splice(0, 2, `${answers.hairColor.trim().toLowerCase()} ${answers.hairstyle.trim().toLowerCase()}`);
+  }
+  return parts.join(", ");
+}
+
+// A one-word name for each question, shown above it and on the progress steps.
+export const LABELS = {
+  aura: "Vibe",
+  race: "Heritage",
+  age: "Age",
+  skinTone: "Skin",
+  hairstyle: "Hair",
+  hairColor: "Colour",
+  outfit: "Outfit",
+  facialExpression: "Look",
+  setting: "Place",
+  imageGenerationStyle: "Style",
+};
+
+// Colour chips for the two colour questions.
+export const SWATCHES = {
+  skinTone: {
+    Porcelain: "#F6E1D3",
+    Fair: "#EFCFB6",
+    "Light olive": "#D9B48F",
+    "Golden tan": "#C99464",
+    "Warm brown": "#A26B43",
+    "Deep brown": "#6E4127",
+    Ebony: "#3B2416",
+  },
+  hairColor: {
+    "Jet black": "#111111",
+    "Dark brown": "#3B2418",
+    Chestnut: "#6B3A22",
+    Auburn: "#8E3B1F",
+    "Copper red": "#B5512A",
+    "Honey blonde": "#D9A957",
+    Platinum: "#ECE6D6",
+    Silver: "#BFC3C7",
+    "Pastel pink": "#F6B8CF",
+  },
+};

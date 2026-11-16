@@ -1,9 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    background: #fff;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-white font-sans text-ink antialiased;
+  }
+  ::selection {
+    background: #ff5fa2;
+    color: #000;
+  }
+  :focus-visible {
+    outline: 3px solid #d6116a;
+    outline-offset: 3px;
+  }
+}
 
-body {
-  font-family: 'Inter', sans-serif;
+@layer components {
+  /* ---- app: white neobrutalism ---- */
+
+  /* Buttons lift on hover and press flat into their shadow on click. */
+  .nb-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border-3 border-ink px-6 py-3 font-bold text-ink shadow-nb
+      transition-[transform,box-shadow] duration-100 ease-out
+      hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-nb-hover
+      active:translate-x-1 active:translate-y-1 active:shadow-none
+      disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-neutral-400 disabled:bg-neutral-100 disabled:text-neutral-500 disabled:shadow-none;
+  }
+  .nb-btn-pink {
+    @apply nb-btn bg-pink;
+  }
+  .nb-btn-white {
+    @apply nb-btn bg-white;
+  }
+  .nb-card {
+    @apply rounded-xl border-3 border-ink bg-white shadow-nb;
+  }
+
+  .font-display {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* ---- landing: the same buttons and chips, drawn in white on the night photo ---- */
+
+  .nb-btn-night {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border-3 border-light bg-pink px-7 py-3.5 font-bold text-ink shadow-nb-w
+      transition-[transform,box-shadow] duration-100 ease-out
+      hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-nb-w-hover
+      active:translate-x-1 active:translate-y-1 active:shadow-none;
+  }
+  .nb-chip-night {
+    @apply flex items-center gap-1.5 rounded-lg border-3 border-light bg-void/40 px-3 py-1.5 text-sm font-bold text-light shadow-nb-w-sm backdrop-blur-sm
+      transition-[transform,box-shadow] duration-100 hover:-translate-x-px hover:-translate-y-px hover:shadow-nb-w active:translate-x-0.5 active:translate-y-0.5 active:shadow-none;
+  }
+  /* Film grain, like the photograph. Static, so it costs nothing. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.11;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
