@@ -4,53 +4,69 @@
 
 @layer base {
   html {
-    background: #0d0d0d;
-    color-scheme: dark;
+    background: #fff;
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-void font-sans text-mist antialiased;
-    font-variation-settings: "wdth" 100;
-  }
-  /* Film grain over everything, like the photograph. Static, so it costs nothing. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    pointer-events: none;
-    opacity: 0.11;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    @apply bg-white font-sans text-ink antialiased;
   }
   ::selection {
-    background: #fff;
+    background: #ff5fa2;
     color: #000;
   }
   :focus-visible {
-    outline: 2px solid #fff;
+    outline: 3px solid #d6116a;
     outline-offset: 3px;
   }
 }
 
 @layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium
-      transition-[transform,background-color,color,border-color,box-shadow] duration-200 ease-out active:scale-[0.97]
-      disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none disabled:active:scale-100;
+  /* ---- app: white neobrutalism ---- */
+
+  /* Buttons lift on hover and press flat into their shadow on click. */
+  .nb-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border-3 border-ink px-6 py-3 font-bold text-ink shadow-nb
+      transition-[transform,box-shadow] duration-100 ease-out
+      hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-nb-hover
+      active:translate-x-1 active:translate-y-1 active:shadow-none
+      disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-neutral-400 disabled:bg-neutral-100 disabled:text-neutral-500 disabled:shadow-none;
   }
-  /* The one bright thing on a screen. */
+  .nb-btn-pink {
+    @apply nb-btn bg-pink;
+  }
+  .nb-btn-white {
+    @apply nb-btn bg-white;
+  }
+  .nb-card {
+    @apply rounded-xl border-3 border-ink bg-white shadow-nb;
+  }
+  /* Diagonal pink stripes for the "drawing" state. */
+  .nb-stripes {
+    background-image: repeating-linear-gradient(-45deg, #ffc6df 0 14px, #fff0f6 14px 28px);
+    background-size: 56px 56px;
+  }
+
+  /* ---- landing: night ---- */
+
   .btn-light {
-    @apply btn bg-light text-void shadow-glow hover:shadow-glow-lg;
-  }
-  .btn-ghost {
-    @apply btn border border-white/20 bg-white/[0.03] text-light hover:border-white/60 hover:bg-white/[0.07];
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-light px-6 py-3 text-[15px] font-medium text-void shadow-glow
+      transition-[transform,box-shadow] duration-200 ease-out hover:shadow-glow-lg active:scale-[0.97];
   }
   .text-link {
     @apply inline-flex items-center gap-1.5 text-light underline decoration-white/30 decoration-1 underline-offset-[5px] transition-colors hover:decoration-white;
   }
   .glow-text {
     text-shadow: 0 0 18px rgba(255, 255, 255, 0.35), 0 0 48px rgba(255, 255, 255, 0.15);
+  }
+  /* Film grain, like the photograph. Static, so it costs nothing. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.11;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
 }
 

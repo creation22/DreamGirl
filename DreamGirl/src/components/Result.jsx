@@ -1,55 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Download, ImageDown, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
-import { Backdrop, Footer, Header } from "./Chrome";
-import { NIGHT } from "../constants/night";
+import { AtSign, Download, PencilLine, RefreshCw, RotateCcw, Share2, Trash2 } from "lucide-react";
+import { Header, Photo } from "./Chrome";
+import { LINKS } from "../constants/links";
 import { captionFor } from "../constants/question";
 import { attachUsername, generatePortrait, removePortrait } from "../lib/api";
 import { forgetOwned, rememberOwned } from "../lib/me";
 import { Link, userPath } from "../lib/router";
 import { SURPLUS_URL, savedPct, usd } from "../utils/money";
-import { downloadShareCard } from "../utils/shareCard";
 
 const SITE = "https://dreamher.vercel.app";
 
-function photoHref(url, id) {
+function downloadHref(url, id) {
   if (url.startsWith("data:")) return url; // local dev
   return `${url}${url.includes("?") ? "&" : "?"}download=dreamher-${id.slice(0, 8)}`;
 }
 
-/** What it cost to bring her to life on Surplus, against the model's list price. */
-function Price({ receipt }) {
+/** What this portrait cost on Surplus, next to the list price. */
+function Receipt({ receipt }) {
   const saved = savedPct(receipt.costMicro, receipt.listMicro);
   return (
-    <section className="mt-12 rounded-[28px] border border-white/10 bg-white/[0.03] p-7 sm:p-8" aria-label="What she cost">
-      <p className="text-sm text-fog">Brought to life on Surplus Intelligence for</p>
-      <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-        <p className="glow-text font-display text-6xl font-normal leading-none tracking-[-0.03em] text-light tabular-nums sm:text-7xl">
-          {receipt.costMicro > 0 ? usd(receipt.costMicro) : "about 1¢"}
-        </p>
-        {receipt.listMicro > 0 && (
-          <p className="text-fog">
-            list price <span className="line-through">{usd(receipt.listMicro)}</span>
-            {saved !== null && <span className="text-light">, {saved}% less</span>}
-          </p>
+    <div className="nb-card mt-8 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b-3 border-ink bg-pink-soft px-4 py-2.5">
+        <h2 className="font-bold">What she cost to draw</h2>
+        {saved !== null && (
+          <span className="rounded-full border-3 border-ink bg-white px-2.5 py-0.5 text-sm font-bold">{saved}% off</span>
         )}
       </div>
-      <dl className="mt-7 grid grid-cols-2 gap-4 border-t border-white/10 pt-5 text-sm">
-        <div>
-          <dt className="text-fog">Model</dt>
-          <dd className="mt-1 text-light">{receipt.modelLabel}</dd>
+      <dl className="divide-y-2 divide-dashed divide-neutral-300 px-4 text-sm">
+        <div className="flex justify-between gap-4 py-2.5">
+          <dt className="text-neutral-700">Model</dt>
+          <dd className="font-semibold">{receipt.modelLabel}</dd>
         </div>
-        <div>
-          <dt className="text-fog">Painted in</dt>
-          <dd className="mt-1 tabular-nums text-light">{receipt.seconds} seconds</dd>
+        {receipt.listMicro > 0 && (
+          <div className="flex justify-between gap-4 py-2.5">
+            <dt className="text-neutral-700">List price</dt>
+            <dd className="font-semibold tabular-nums text-neutral-500 line-through decoration-2">{usd(receipt.listMicro)}</dd>
+          </div>
+        )}
+        {receipt.costMicro > 0 && (
+          <div className="flex items-center justify-between gap-4 py-3">
+            <dt className="font-semibold">Paid on Surplus Intelligence</dt>
+            <dd className="rounded-lg border-3 border-ink bg-pink px-2.5 py-1 font-display text-xl tabular-nums">{usd(receipt.costMicro)}</dd>
+          </div>
+        )}
+        <div className="flex justify-between gap-4 py-2.5">
+          <dt className="text-neutral-700">Drawing time</dt>
+          <dd className="font-semibold tabular-nums">{receipt.seconds}s</dd>
         </div>
       </dl>
-      <p className="mt-6 text-sm leading-relaxed text-fog">
-        Surplus sends every request to the cheapest provider with spare capacity.{" "}
-        <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="text-link">
+      <p className="border-t-3 border-ink px-4 py-3 text-sm leading-relaxed">
+        Surplus routes every request to the cheapest healthy seller of spare AI capacity.{" "}
+        <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-bold underline decoration-2 underline-offset-4 hover:text-pink-deep">
           Get these prices for your app
         </a>
       </p>
-    </section>
+    </div>
   );
 }
 
@@ -61,11 +66,10 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
   const [startedAt, setStartedAt] = useState(Date.now);
   const [now, setNow] = useState(Date.now);
   const [post, setPost] = useState({ state: "idle", msg: "" }); // idle | posting | posted | removed | error
-  const [saving, setSaving] = useState("");
   const started = useRef(-1);
   const current = useRef(0);
 
-  // One request per attempt. The ref guard also stops StrictMode from painting (and paying) twice.
+  // One request per attempt. The ref guard also stops StrictMode from drawing (and paying) twice.
   useEffect(() => {
     if (started.current === attempt) return;
     started.current = attempt;
@@ -88,7 +92,7 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
         setError(e.message);
         setStatus("error");
       });
-    // handle is read once per painting on purpose; adding it later posts via the effect below.
+    // handle is read once per drawing on purpose; adding it later posts via the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt, answers]);
 
@@ -113,13 +117,13 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
     [data],
   );
 
-  // Username added after she was painted: put her in the gallery now.
+  // Username added after she was drawn: post her now (every portrait goes in the gallery).
   useEffect(() => {
     if (status === "ready" && handle && data && !data.posted && post.state === "idle") postAs(handle);
   }, [status, handle, data, post.state, postAs]);
 
   const remove = async () => {
-    if (!data || !window.confirm("Take her out of the gallery? The picture is deleted.")) return;
+    if (!data || !window.confirm("Remove her from the public gallery? The picture is deleted.")) return;
     try {
       await removePortrait(data.item.id, data.token);
       forgetOwned(data.item.id);
@@ -130,30 +134,10 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
     }
   };
 
-  const saveCard = async () => {
-    if (!data) return;
-    setSaving("Making your card...");
-    try {
-      await downloadShareCard(
-        {
-          image: data.item.imageUrl,
-          caption: data.item.caption,
-          costMicro: data.receipt.costMicro,
-          handle: data.posted ? data.item.username : null,
-        },
-        `dreamher-${data.item.id.slice(0, 8)}.png`,
-      );
-      setSaving("");
-    } catch (e) {
-      setSaving(e.message);
-    }
-  };
-
   const share = async () => {
     const posted = data?.posted && data.item.username;
     const url = posted ? `${SITE}${userPath(data.item.username)}` : SITE;
-    const price = data?.receipt?.costMicro ? usd(data.receipt.costMicro) : "about a cent";
-    const text = `I described her and she stepped out of the light. Brought to life on Surplus Intelligence for ${price}.`;
+    const text = "I described my dream girl and DreamHer drew her for under a cent. Try it:";
     if (navigator.share) {
       try {
         await navigator.share({ title: "DreamHer", text, url });
@@ -168,107 +152,103 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
   const caption = captionFor(answers) || "your dream girl";
   const elapsed = Math.max(0, Math.round((now - startedAt) / 1000));
   const loading = status === "loading";
-  const ready = status === "ready" && data;
+  const link = "inline-flex items-center gap-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
 
   return (
-    <div className="flex min-h-[100svh] flex-col">
-      <Backdrop />
+    <div className="flex min-h-[100svh] flex-col overflow-x-clip">
       <Header onHome={onRestart} />
 
-      <main className="mx-auto grid w-full max-w-7xl flex-1 items-start gap-14 px-5 pb-20 pt-10 sm:px-10 lg:grid-cols-[minmax(0,520px)_1fr] lg:gap-24 lg:pt-16">
-        <div className="mx-auto w-full max-w-[520px] lg:sticky lg:top-10">
-          <div className="relative aspect-square overflow-hidden rounded-[32px] bg-ash shadow-halo">
-            {ready && (
+      <main className="mx-auto grid w-full max-w-6xl flex-1 items-start gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-20 lg:pt-14">
+        <div className="mx-auto w-full max-w-[460px] lg:sticky lg:top-8">
+          <Photo caption={caption} shadow="shadow-nb-lg" className="-rotate-1">
+            {status === "ready" && data && (
               <img
                 key={data.item.id}
                 src={data.item.imageUrl}
                 alt={`AI portrait: ${caption}`}
                 width="1024"
                 height="1024"
-                className="h-full w-full animate-emerge object-cover"
+                className="h-full w-full animate-develop object-cover"
               />
             )}
             {loading && (
-              <div className="absolute inset-0" role="status">
-                <img src={NIGHT.glow} alt="" className="h-full w-full animate-breathe object-cover object-[50%_35%]" />
-                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-void/85 via-void/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-7">
-                  <p className="font-display text-3xl italic text-light">She's stepping out of the light</p>
-                  <p className="mt-2 text-sm tabular-nums text-fog">
-                    {elapsed}s {elapsed > 20 ? "(almost here)" : "(usually 5 to 20 seconds)"}
+              <div className="nb-stripes flex h-full w-full animate-stripes items-center justify-center p-6" role="status">
+                <div className="nb-card max-w-[17rem] px-5 py-4 text-center">
+                  <p className="font-display text-2xl">Drawing her</p>
+                  <p className="mt-2 text-sm tabular-nums text-neutral-700">
+                    {elapsed}s {elapsed > 20 ? "(almost there)" : "(usually 5 to 20 seconds)"}
                   </p>
                 </div>
               </div>
             )}
             {status === "error" && (
-              <div className="absolute inset-0 grid place-items-center p-10 text-center" role="alert">
-                <div>
-                  <AlertCircle className="mx-auto h-6 w-6 text-light" aria-hidden />
-                  <p className="mt-4 font-display text-3xl italic text-light">She didn't come through.</p>
-                  <p className="mt-3 text-sm leading-relaxed text-fog">{error}</p>
-                </div>
+              <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center" role="alert">
+                <p className="font-display text-2xl">She wasn't drawn.</p>
+                <p className="max-w-[18rem] text-sm leading-relaxed text-neutral-700">{error}</p>
+                <button type="button" onClick={() => setAttempt((n) => n + 1)} className="nb-btn-pink text-sm">
+                  <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
+                  Try again
+                </button>
               </div>
             )}
-          </div>
-          <p className="mt-5 font-display text-xl italic text-mist">{ready ? data.item.caption : caption}</p>
+          </Photo>
         </div>
 
-        <div className="max-w-xl">
-          <h1 className="glow-text font-display text-[clamp(2.8rem,6.6vw,5.2rem)] font-normal leading-[0.98] tracking-[-0.025em] text-light">
-            {ready ? "There she is." : status === "error" ? "The light flickered." : "Almost here."}
+        <div className="max-w-lg">
+          <h1 className="font-display text-[clamp(2.4rem,8vw,3.75rem)] leading-[1.05]">
+            {status === "ready" ? "Here she is." : status === "error" ? "Almost there." : "She's on her way."}
           </h1>
-          <p className="mt-6 text-lg leading-relaxed text-fog">
-            {status === "error"
-              ? "Your answers are kept. Try again, or change an answer first."
-              : "Not quite her? Dream her again for a new take on the same answers, or change an answer."}
+          <p className="mt-4 text-lg leading-relaxed text-neutral-700">
+            Not quite her? Draw her again for a new take on the same answers, or change an answer.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-3">
-            <button type="button" onClick={saveCard} disabled={!ready || !!saving} className="btn-light px-7">
-              <Download className="h-4 w-4" aria-hidden />
-              Download
+          <div className="mt-8 flex flex-wrap gap-3">
+            {status === "ready" && data ? (
+              <a href={downloadHref(data.item.imageUrl, data.item.id)} download="dreamher.png" className="nb-btn-pink">
+                <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                Download
+              </a>
+            ) : (
+              <button type="button" disabled className="nb-btn-pink">
+                <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                Download
+              </button>
+            )}
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} disabled={loading} className="nb-btn-white">
+              <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
+              Draw her again
             </button>
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} disabled={loading} className={status === "error" ? "btn-light" : "btn-ghost"}>
-              <RefreshCw className="h-4 w-4" aria-hidden />
-              {status === "error" ? "Try again" : "Dream her again"}
-            </button>
-            <button type="button" onClick={share} disabled={!ready} className="btn-ghost">
-              <Share2 className="h-4 w-4" aria-hidden />
+            <button type="button" onClick={share} disabled={loading} className="nb-btn-white">
+              <Share2 className="h-4 w-4" strokeWidth={3} aria-hidden />
               Share
             </button>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-fog">
-            {ready && (
-              <a href={photoHref(data.item.imageUrl, data.item.id)} download="dreamher-photo.png" className="inline-flex items-center gap-1.5 hover:text-light">
-                <ImageDown className="h-4 w-4" aria-hidden />
-                Photo only
-              </a>
-            )}
-            {saving && <span role="status">{saving}</span>}
-          </div>
 
-          {ready && (
-            <div className="mt-8 text-[15px] text-mist" role="status">
+          {/* Gallery status */}
+          {status === "ready" && data && (
+            <div className="mt-6 rounded-xl border-3 border-dashed border-ink bg-pink-wash px-4 py-3 text-sm" role="status">
               {post.state === "posted" && (
-                <p className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <span>
-                    She's in the gallery, dreamed up by <span className="text-light">@{data.item.username}</span>.
+                    Posted to the public gallery as <strong>@{data.item.username}</strong>.
                   </span>
-                  <Link to={userPath(data.item.username)} className="text-link">
-                    See yours
+                  <Link to={userPath(data.item.username)} className={link}>
+                    See your page
                   </Link>
-                  <button type="button" onClick={remove} className="text-fog underline decoration-white/20 underline-offset-[5px] hover:text-light">
-                    Take her down
+                  <button type="button" onClick={remove} className={link}>
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    Remove
                   </button>
                 </p>
               )}
-              {post.state === "posting" && <p>Adding her to the gallery...</p>}
-              {post.state === "removed" && <p>Taken down and deleted.</p>}
-              {post.state === "error" && <p className="text-light">{post.msg}</p>}
+              {post.state === "posting" && <p>Posting her to the gallery...</p>}
+              {post.state === "removed" && <p>Removed from the gallery and deleted.</p>}
+              {post.state === "error" && <p className="font-semibold text-pink-deep">{post.msg}</p>}
               {post.state === "idle" && !handle && (
-                <p className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                  <span>Add your X username to put her in the gallery.</span>
-                  <button type="button" onClick={onAskHandle} className="text-link">
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <span>Add your X username to put her in the public gallery.</span>
+                  <button type="button" onClick={onAskHandle} className={link}>
+                    <AtSign className="h-4 w-4" aria-hidden />
                     Add username
                   </button>
                 </p>
@@ -276,30 +256,41 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
             </div>
           )}
 
-          {ready && data.receipt && <Price receipt={data.receipt} />}
+          {status === "ready" && data?.receipt && <Receipt receipt={data.receipt} />}
 
-          <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-[15px]">
-            <button type="button" onClick={onEdit} className="text-link">
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <button type="button" onClick={onEdit} className={link}>
               <PencilLine className="h-4 w-4" aria-hidden />
               Change answers
             </button>
-            <button type="button" onClick={onRestart} className="text-link">
+            <button type="button" onClick={onRestart} className={link}>
               <RotateCcw className="h-4 w-4" aria-hidden />
               Start over
             </button>
           </div>
 
           {data?.prompt && (
-            <details className="mt-10 border-t border-white/10 pt-5 text-sm">
-              <summary className="cursor-pointer list-none text-fog hover:text-light [&::-webkit-details-marker]:hidden">
-                Read what we asked the painter for
+            <details className="nb-card group mt-8 overflow-hidden text-sm">
+              <summary className="cursor-pointer list-none px-4 py-3 font-bold group-open:border-b-3 group-open:border-ink group-open:bg-pink-soft [&::-webkit-details-marker]:hidden">
+                See the description we sent
               </summary>
-              <p className="mt-3 leading-relaxed text-fog">{data.prompt}</p>
+              <p className="px-4 py-3 leading-relaxed text-neutral-700">{data.prompt}</p>
             </details>
           )}
+
+          <p className="mt-8 text-sm text-neutral-700">
+            Enjoying it?{" "}
+            <a href={LINKS.feedback} target="_blank" rel="noopener noreferrer" className={link}>
+              Tell me what to add
+            </a>{" "}
+            or{" "}
+            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={link}>
+              star the repo
+            </a>
+            .
+          </p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

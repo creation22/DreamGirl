@@ -1,4 +1,6 @@
-import { Header } from "./Chrome";
+import { useContext } from "react";
+import { HandleDialogContext } from "../lib/dialog";
+import { useHandle } from "../lib/me";
 import { LINKS } from "../constants/links";
 import { NIGHT } from "../constants/night";
 import { useSurplusStats } from "../lib/useSurplusStats";
@@ -7,13 +9,41 @@ import { SURPLUS_URL, usd } from "../utils/money";
 
 const delay = (ms) => ({ animationDelay: `${ms}ms` });
 
+/** The landing page's own header: quiet white type over the photograph. */
+function NightHeader() {
+  const handle = useHandle();
+  const openDialog = useContext(HandleDialogContext);
+  return (
+    <header className="relative z-10">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5 sm:px-10">
+        <Link to="/" aria-label="DreamHer home" className="font-serif text-[26px] font-medium italic leading-none tracking-[-0.02em] text-light">
+          DreamHer
+        </Link>
+        <nav className="flex min-w-0 items-center gap-1 sm:gap-3" aria-label="Main">
+          <Link to="/gallery" className="rounded-full px-3 py-2 text-sm text-fog transition-colors hover:text-light">
+            Gallery
+          </Link>
+          <button
+            type="button"
+            onClick={openDialog}
+            title="Change your X username"
+            className="max-w-[9rem] truncate rounded-full px-3 py-2 text-sm text-fog transition-colors hover:text-light"
+          >
+            {handle ? `@${handle}` : "Add your X"}
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
 /** One screen: the photograph, one line, one button. */
 export default function Landing({ onStart }) {
   const stats = useSurplusStats();
   const avg = stats ? Math.round(stats.costMicro / stats.portraits) : 0;
 
   return (
-    <div className="relative isolate flex h-[100svh] min-h-[620px] flex-col overflow-hidden bg-void">
+    <div className="grain relative isolate flex h-[100svh] min-h-[620px] flex-col overflow-hidden bg-void text-mist">
       <img
         src={NIGHT.full}
         alt="A man walks through tall grass at night, holding the hand of a girl made of light."
@@ -24,11 +54,11 @@ export default function Landing({ onStart }) {
       <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-b from-void/70 via-transparent to-void/95 sm:bg-gradient-to-r sm:from-void/85 sm:from-0% sm:via-void/30 sm:via-30% sm:to-transparent sm:to-48%" />
       <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 hidden h-1/3 bg-gradient-to-t from-void/85 to-transparent sm:block" />
 
-      <Header transparent />
+      <NightHeader />
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-5 pb-6 pt-2 sm:justify-end sm:px-10 sm:pb-10">
         <h1
-          className="glow-text max-w-[12ch] animate-rise font-display text-[clamp(2.5rem,7.4vw,6rem)] font-normal leading-[0.98] tracking-[-0.025em] text-light"
+          className="glow-text max-w-[12ch] animate-rise font-serif text-[clamp(2.5rem,7.4vw,6rem)] font-normal leading-[0.98] tracking-[-0.025em] text-light"
           style={delay(400)}
         >
           She's only a glow until you describe her.
