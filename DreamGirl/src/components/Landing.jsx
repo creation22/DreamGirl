@@ -7,7 +7,6 @@ import { LINKS } from "../constants/links";
 import { NIGHT } from "../constants/night";
 import { useSurplusStats } from "../lib/useSurplusStats";
 import { Link } from "../lib/router";
-import { SURPLUS_URL, usd } from "../utils/money";
 
 const delay = (ms) => ({ animationDelay: `${ms}ms` });
 
@@ -40,7 +39,6 @@ function NightHeader() {
 /** One screen: the photograph, one line, one button, in the app's own shapes. */
 export default function Landing({ onStart }) {
   const stats = useSurplusStats();
-  const avg = stats ? Math.round(stats.costMicro / stats.portraits) : 0;
 
   return (
     <div className="grain relative isolate flex h-[100svh] min-h-[640px] flex-col overflow-hidden bg-void text-mist">
@@ -70,8 +68,7 @@ export default function Landing({ onStart }) {
 
         <div>
           <p className="max-w-md animate-rise text-[17px] font-medium leading-relaxed text-mist sm:mt-8 sm:text-lg" style={delay(700)}>
-            Answer ten questions and she steps out of the light, painted in seconds by Surplus
-            Intelligence.
+            Answer ten questions and she steps out of the light, painted in seconds.
           </p>
           <div className="mt-7 flex animate-rise flex-wrap items-center gap-x-5 gap-y-4" style={delay(900)}>
             <button type="button" onClick={onStart} className="nb-btn-night text-lg">
@@ -84,17 +81,12 @@ export default function Landing({ onStart }) {
 
           <div className="mt-10 flex animate-rise flex-col gap-4 text-[13px] text-fog sm:flex-row sm:items-center sm:justify-between" style={delay(1100)}>
             <p className="self-start rounded-lg border-2 border-white/40 bg-void/50 px-3 py-2 text-mist backdrop-blur-sm">
-              {stats ? (
+              {stats?.portraits ? (
                 <>
-                  {stats.portraits.toLocaleString("en-US")} dreamed up so far, at <strong className="text-light">{usd(avg)}</strong> each on{" "}
+                  <strong className="text-light">{stats.portraits.toLocaleString("en-US")}</strong> dreamed up so far.{" "}
                 </>
-              ) : (
-                <>About a cent each, painted on </>
-              )}
-              <a href={SURPLUS_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-light underline underline-offset-4">
-                Surplus Intelligence
-              </a>
-              . Free, no sign-up.
+              ) : null}
+              Free, no sign-up.
             </p>
             <nav className="flex gap-5 font-medium" aria-label="More">
               <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="hover:text-light">GitHub</a>

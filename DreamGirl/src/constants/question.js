@@ -138,3 +138,41 @@ export function captionFor(answers, { all = false } = {}) {
   }
   return parts.join(", ");
 }
+
+// A one-word name for each question, shown above it and on the progress steps.
+export const LABELS = {
+  aura: "Vibe",
+  race: "Heritage",
+  age: "Age",
+  skinTone: "Skin",
+  hairstyle: "Hair",
+  hairColor: "Colour",
+  outfit: "Outfit",
+  facialExpression: "Look",
+  setting: "Place",
+  imageGenerationStyle: "Style",
+};
+
+// Colour chips for the two colour questions.
+export const SWATCHES = {
+  skinTone: {
+    Porcelain: "#F6E1D3",
+    Fair: "#EFCFB6",
+    "Light olive": "#D9B48F",
+    "Golden tan": "#C99464",
+    "Warm brown": "#A26B43",
+    "Deep brown": "#6E4127",
+    Ebony: "#3B2416",
+  },
+  hairColor: {
+    "Jet black": "#111111",
+    "Dark brown": "#3B2418",
+    Chestnut: "#6B3A22",
+    Auburn: "#8E3B1F",
+    "Copper red": "#B5512A",
+    "Honey blonde": "#D9A957",
+    Platinum: "#ECE6D6",
+    Silver: "#BFC3C7",
+    "Pastel pink": "#F6B8CF",
+  },
+};
