@@ -93,6 +93,11 @@ function supabaseStore(url, key) {
       const res = await rest(`/portraits?${q}`, { prefer: "count=exact" });
       return Number((res.headers.get("content-range") || "*/0").split("/")[1]) || 0;
     },
+    async countSinceForName(username, sinceIso) {
+      const q = new URLSearchParams({ select: "id", username_lc: `eq.${username.toLowerCase()}`, created_at: `gt.${sinceIso}`, limit: "1" });
+      const res = await rest(`/portraits?${q}`, { prefer: "count=exact" });
+      return Number((res.headers.get("content-range") || "*/0").split("/")[1]) || 0;
+    },
     async spentSince(sinceIso) {
       const res = await rest("/rpc/spent_since", { method: "POST", body: { p_since: sinceIso } });
       return Number(await res.json()) || 0;
@@ -160,6 +165,10 @@ function memoryStore() {
     },
     async countSince(ipHash, sinceIso) {
       return db.rows.filter((r) => r.ip_hash === ipHash && r.created_at > sinceIso).length;
+    },
+    async countSinceForName(username, sinceIso) {
+      const lc = username.toLowerCase();
+      return db.rows.filter((r) => r.username?.toLowerCase() === lc && r.created_at > sinceIso).length;
     },
     async spentSince(sinceIso) {
       return db.rows.filter((r) => r.created_at >= sinceIso).reduce((s, r) => s + r.cost_micro, 0);

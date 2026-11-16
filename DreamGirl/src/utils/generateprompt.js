@@ -161,7 +161,8 @@ export function generatePrompt(answers) {
     `She is wearing ${outfit}${setting ? `, ${setting}` : ""}.`,
     `Her vibe is ${aura}.`,
     // Portraits go to a public gallery, so keep every one an adult, clothed and safe for work.
-    `Adult woman, upper-body portrait, fully clothed, tasteful and safe for work. ${finish.charAt(0).toUpperCase()}${finish.slice(1)}, beautiful lighting, high detail.`,
+    // The cheap models drop the shirt under a blazer unless told otherwise.
+    `Adult woman, upper-body portrait, fully clothed with a modest neckline (a top or shirt under any jacket), tasteful and safe for work. ${finish.charAt(0).toUpperCase()}${finish.slice(1)}, beautiful lighting, high detail.`,
   ];
 
   const negative =

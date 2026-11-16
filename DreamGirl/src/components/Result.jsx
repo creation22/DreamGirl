@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AtSign, Download, PencilLine, RefreshCw, RotateCcw, Share2, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
 import { Header, Photo } from "./Chrome";
 import { LINKS } from "../constants/links";
 import { NIGHT } from "../constants/night";
 import { captionFor } from "../constants/question";
-import { attachUsername, generatePortrait, removePortrait } from "../lib/api";
-import { forgetOwned, rememberOwned } from "../lib/me";
+import { generatePortrait } from "../lib/api";
 import { Link, userPath } from "../lib/router";
 import { SURPLUS_URL, savedPct, usd } from "../utils/money";
 
@@ -59,14 +58,13 @@ function Receipt({ receipt }) {
   );
 }
 
-export default function Result({ answers, handle, onAskHandle, onRestart, onEdit }) {
+export default function Result({ answers, handle, onRestart, onEdit }) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("loading"); // loading | ready | error
-  const [data, setData] = useState(null); // {item, token, posted, receipt, prompt}
+  const [data, setData] = useState(null); // {item, receipt, prompt}
   const [error, setError] = useState("");
   const [startedAt, setStartedAt] = useState(Date.now);
   const [now, setNow] = useState(Date.now);
-  const [post, setPost] = useState({ state: "idle", msg: "" }); // idle | posting | posted | removed | error
   const started = useRef(-1);
   const current = useRef(0);
 
@@ -78,14 +76,11 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
     setStatus("loading");
     setError("");
     setData(null);
-    setPost({ state: "idle", msg: "" });
     setStartedAt(Date.now());
     generatePortrait(answers, handle)
       .then((d) => {
-        rememberOwned(d.item.id, d.token);
         if (current.current !== attempt) return;
         setData(d);
-        setPost(d.posted ? { state: "posted", msg: "" } : { state: "idle", msg: "" });
         setStatus("ready");
       })
       .catch((e) => {
@@ -93,7 +88,7 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
         setError(e.message);
         setStatus("error");
       });
-    // handle is read once per drawing on purpose; adding it later posts via the effect below.
+    // handle is read once per drawing on purpose: a name change applies to the next portrait.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt, answers]);
 
@@ -103,41 +98,8 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
     return () => clearInterval(id);
   }, [status]);
 
-  const postAs = useCallback(
-    async (name) => {
-      if (!data) return;
-      setPost({ state: "posting", msg: "" });
-      try {
-        const r = await attachUsername(data.item.id, data.token, name);
-        setData((d) => ({ ...d, item: r.item, posted: true }));
-        setPost({ state: "posted", msg: "" });
-      } catch (e) {
-        setPost({ state: "error", msg: e.message });
-      }
-    },
-    [data],
-  );
-
-  // Username added after she was drawn: post her now (every portrait goes in the gallery).
-  useEffect(() => {
-    if (status === "ready" && handle && data && !data.posted && post.state === "idle") postAs(handle);
-  }, [status, handle, data, post.state, postAs]);
-
-  const remove = async () => {
-    if (!data || !window.confirm("Remove her from the public gallery? The picture is deleted.")) return;
-    try {
-      await removePortrait(data.item.id, data.token);
-      forgetOwned(data.item.id);
-      setData((d) => ({ ...d, posted: false }));
-      setPost({ state: "removed", msg: "" });
-    } catch (e) {
-      setPost({ state: "error", msg: e.message });
-    }
-  };
-
   const share = async () => {
-    const posted = data?.posted && data.item.username;
-    const url = posted ? `${SITE}${userPath(data.item.username)}` : SITE;
+    const url = data?.item.username ? `${SITE}${userPath(data.item.username)}` : SITE;
     const text = "I described my dream girl and DreamHer drew her for under a cent. Try it:";
     if (navigator.share) {
       try {
@@ -226,36 +188,16 @@ export default function Result({ answers, handle, onAskHandle, onRestart, onEdit
             </button>
           </div>
 
-          {/* Gallery status */}
-          {status === "ready" && data && (
-            <div className="mt-6 rounded-xl border-3 border-dashed border-ink bg-pink-wash px-4 py-3 text-sm" role="status">
-              {post.state === "posted" && (
-                <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <span>
-                    Posted to the public gallery as <strong>@{data.item.username}</strong>.
-                  </span>
-                  <Link to={userPath(data.item.username)} className={link}>
-                    See your page
-                  </Link>
-                  <button type="button" onClick={remove} className={link}>
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                    Remove
-                  </button>
-                </p>
-              )}
-              {post.state === "posting" && <p>Posting her to the gallery...</p>}
-              {post.state === "removed" && <p>Removed from the gallery and deleted.</p>}
-              {post.state === "error" && <p className="font-semibold text-pink-deep">{post.msg}</p>}
-              {post.state === "idle" && !handle && (
-                <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <span>Add your X username to put her in the public gallery.</span>
-                  <button type="button" onClick={onAskHandle} className={link}>
-                    <AtSign className="h-4 w-4" aria-hidden />
-                    Add username
-                  </button>
-                </p>
-              )}
-            </div>
+          {/* Every portrait goes in the public gallery under the visitor's username. */}
+          {status === "ready" && data?.item.username && (
+            <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border-3 border-dashed border-ink bg-pink-wash px-4 py-3 text-sm" role="status">
+              <span>
+                Posted to the public gallery as <strong>@{data.item.username}</strong>.
+              </span>
+              <Link to={userPath(data.item.username)} className={link}>
+                See your page
+              </Link>
+            </p>
           )}
 
           {status === "ready" && data?.receipt && <Receipt receipt={data.receipt} />}

@@ -8,7 +8,9 @@ const BASE = (process.env.SURPLUS_BASE_URL || "https://api.surplusintelligence.a
 const SIZE = "1024x1024";
 const MEGAPIXELS = (1024 * 1024) / 1e6;
 // First model that answers wins. Override with SURPLUS_IMAGE_MODELS="a,b,c".
-const MODELS = (process.env.SURPLUS_IMAGE_MODELS || "venice-flux-2-pro,flux.2-klein-4b")
+// Z-Image Turbo: $0.004 a portrait in our tests (Nov 2026), about as good as FLUX.2 Pro
+// at a fifth of the price. FLUX 1.1 and Klein 4B are cheap fallbacks.
+const MODELS = (process.env.SURPLUS_IMAGE_MODELS || "venice-z-image-turbo,venice-flux-1.1,flux.2-klein-4b")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
@@ -29,6 +31,8 @@ const LABELS = {
   "flux.2-flex": "FLUX.2 Flex",
   "seedream-4.5": "Seedream 4.5",
   "venice-z-image-turbo": "Z-Image Turbo",
+  "venice-flux-1.1": "FLUX 1.1",
+  "venice-qwen-image-2-1-turbo": "Qwen Image 2.1 Turbo",
 };
 export const modelLabel = (id) => LABELS[id] || id;
 
@@ -139,5 +143,18 @@ export async function drawPortrait(prompt) {
     }
   }
   out.listMicro = await listPriceMicro(out.model);
+  return shrink(out);
+}
+
+// Some models send 1.5-2.7 MB PNGs. Store a WebP of ~100-200 KB instead: the gallery
+// loads fast and storage lasts ~10x longer. If conversion fails, keep the original.
+async function shrink(out) {
+  try {
+    const { default: sharp } = await import("sharp");
+    const bytes = await sharp(out.bytes).resize(1024, 1024, { fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    if (bytes.length < out.bytes.length) return { ...out, bytes, contentType: "image/webp" };
+  } catch (e) {
+    console.warn("[surplus] couldn't convert to webp", e?.message);
+  }
   return out;
 }

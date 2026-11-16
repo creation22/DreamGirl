@@ -26,6 +26,7 @@ create table if not exists public.portraits (
 create index if not exists portraits_recent on public.portraits (created_at desc) where username is not null and not hidden;
 create index if not exists portraits_by_user on public.portraits (username_lc, created_at desc) where username is not null and not hidden;
 create index if not exists portraits_by_ip on public.portraits (ip_hash, created_at desc);
+create index if not exists portraits_by_name on public.portraits (username_lc, created_at desc);
 create index if not exists portraits_by_day on public.portraits (created_at);
 
 -- One report per visitor per portrait; three reports from different visitors hide it.

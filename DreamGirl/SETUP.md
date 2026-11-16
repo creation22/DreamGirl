@@ -24,7 +24,10 @@ Project > Settings > Environment Variables:
 | `IP_HASH_SALT` | any long random string | recommended |
 | `DAILY_BUDGET_USD` | spend cap per UTC day, default `5` | no |
 | `LIMIT_PER_10_MIN` / `LIMIT_PER_DAY` | per-visitor limits, default `6` / `30` | no |
-| `SURPLUS_IMAGE_MODELS` | models to try in order, default `venice-flux-2-pro,flux.2-klein-4b` | no |
+| `SURPLUS_IMAGE_MODELS` | models to try in order, default `venice-z-image-turbo,venice-flux-1.1,flux.2-klein-4b` | no |
+| `LIMIT_PER_USERNAME_DAY` | portraits per username per 24 h, default `30` | no |
+| `HOURLY_BUDGET_USD` | spend cap per hour, default `1`, so one person can't use up the day in minutes | no |
+| `TURNSTILE_SECRET_KEY` + `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile keys (free) for the bot check; both or neither | recommended |
 | `GITHUB_TOKEN` | any GitHub token (no scopes), raises the star counter's GitHub limit from 60 to 5,000 calls an hour; the count is cached for a minute, so it's rarely needed | no |
 
 Redeploy after adding them.
@@ -62,3 +65,12 @@ different visitors hide a portrait. To hide something by hand, see the bottom of
 ## Prompt log
 
 Every request to draw a portrait is kept in the `prompt_log` table: the ten answers, the exact prompt sent to Surplus, the username as typed, a hashed IP, and what happened (`drawn`, `blocked`, `limited`, `failed`, `invalid`). Blocked and failed requests are kept too. Read it in Supabase (Table Editor, or the queries at the bottom of `supabase/schema.sql`). Running locally without Supabase, it goes to `.dev-data/prompt_log.jsonl` instead.
+
+## Stopping abuse (there's no login)
+
+Each layer catches a different kind of abuse:
+
+1. **Spending caps** (`DAILY_BUDGET_USD`, `HOURLY_BUDGET_USD`): the hard ceiling. Nothing anyone does can spend more than this. With Z-Image Turbo at about $0.004 a portrait, $5 a day is about 1,250 portraits.
+2. **Per visitor** (hashed IP): 6 in 10 minutes, 30 a day.
+3. **Per username**: 30 a day, however many IPs it comes from.
+4. **Bot check** (Cloudflare Turnstile): stops scripts calling `/api/generate` directly. Free at dash.cloudflare.com → Turnstile → Add site (domain `dreamher.vercel.app`, mode Managed). Put the site key in `VITE_TURNSTILE_SITE_KEY` and the secret in `TURNSTILE_SECRET_KEY`, then redeploy. Real visitors almost never see it.

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Flag, Search, Trash2 } from "lucide-react";
+import { Flag, Search } from "lucide-react";
 import { Header } from "./Chrome";
-import { listPortraits, removePortrait, reportPortrait } from "../lib/api";
-import { forgetOwned, ownedToken } from "../lib/me";
+import { listPortraits, reportPortrait } from "../lib/api";
 import { Link, navigate, userPath } from "../lib/router";
 import { normalizeHandle } from "../utils/moderation";
 import { SURPLUS_URL, usd } from "../utils/money";
@@ -28,11 +27,10 @@ function timeAgo(iso) {
   return "";
 }
 
-function PortraitCard({ item, showUser, onGone }) {
+function PortraitCard({ item, showUser }) {
   const [broken, setBroken] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const token = ownedToken(item.id);
 
   const report = async () => {
     if (!window.confirm("Report this portrait? Three reports hide it from the gallery.")) return;
@@ -43,19 +41,6 @@ function PortraitCard({ item, showUser, onGone }) {
     } catch (e) {
       setNote(e.message);
     } finally {
-      setBusy(false);
-    }
-  };
-
-  const remove = async () => {
-    if (!window.confirm("Remove this portrait from the public gallery?")) return;
-    setBusy(true);
-    try {
-      await removePortrait(item.id, token);
-      forgetOwned(item.id);
-      onGone(item.id);
-    } catch (e) {
-      setNote(e.message);
       setBusy(false);
     }
   };
@@ -100,23 +85,16 @@ function PortraitCard({ item, showUser, onGone }) {
             )}
             <span className="text-neutral-700">{timeAgo(item.createdAt)}</span>
           </span>
-          {token ? (
-            <button type="button" onClick={remove} disabled={busy} className="flex shrink-0 items-center gap-1 font-semibold hover:text-pink-deep disabled:opacity-50">
-              <Trash2 className="h-3.5 w-3.5" aria-hidden />
-              Remove
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={report}
-              disabled={busy || !!note}
-              aria-label={`Report portrait by @${item.username}`}
-              className="flex shrink-0 items-center gap-1 font-semibold text-neutral-700 hover:text-pink-deep disabled:opacity-50"
-            >
-              <Flag className="h-3.5 w-3.5" aria-hidden />
-              Report
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={report}
+            disabled={busy || !!note}
+            aria-label={`Report portrait by @${item.username}`}
+            className="flex shrink-0 items-center gap-1 font-semibold text-neutral-700 hover:text-pink-deep disabled:opacity-50"
+          >
+            <Flag className="h-3.5 w-3.5" aria-hidden />
+            Report
+          </button>
         </div>
         {note && <p className="text-xs font-semibold text-pink-deep" role="status">{note}</p>}
       </div>
@@ -208,8 +186,6 @@ export default function Gallery({ handle: rawHandle, onStart }) {
     }
   };
 
-  const gone = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
-
   useEffect(() => {
     document.title = handle ? `@${handle}'s portraits | DreamHer` : "Public gallery | DreamHer";
     return () => {
@@ -291,7 +267,7 @@ export default function Gallery({ handle: rawHandle, onStart }) {
             <>
               <ul className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
                 {items.map((item) => (
-                  <PortraitCard key={item.id} item={item} showUser={!handle} onGone={gone} />
+                  <PortraitCard key={item.id} item={item} showUser={!handle} />
                 ))}
               </ul>
               {next && (

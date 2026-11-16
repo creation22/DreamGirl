@@ -1,3 +1,5 @@
+import { getTurnstileToken } from "./turnstile";
+
 async function call(path, { method = "GET", body } = {}) {
   let res;
   try {
@@ -19,9 +21,11 @@ async function call(path, { method = "GET", body } = {}) {
   return data;
 }
 
-/** Draws a portrait through Surplus. Posts it to the gallery when a username is given. */
-export const generatePortrait = (answers, username) =>
-  call("/api/generate", { method: "POST", body: { answers, username: username || undefined } });
+/** Draws a portrait through Surplus and posts it to the gallery under the username. */
+export async function generatePortrait(answers, username) {
+  const turnstileToken = (await getTurnstileToken()) || undefined;
+  return call("/api/generate", { method: "POST", body: { answers, username, turnstileToken } });
+}
 
 export function listPortraits({ user, before, limit = 24 } = {}) {
   const q = new URLSearchParams({ limit: String(limit) });
@@ -30,10 +34,6 @@ export function listPortraits({ user, before, limit = 24 } = {}) {
   return call(`/api/portraits?${q}`);
 }
 
-export const attachUsername = (id, token, username) =>
-  call("/api/portraits", { method: "PATCH", body: { id, token, username } });
-
-export const removePortrait = (id, token) => call("/api/portraits", { method: "DELETE", body: { id, token } });
 
 export const reportPortrait = (id) => call("/api/report", { method: "POST", body: { id } });
 
