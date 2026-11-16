@@ -46,6 +46,13 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
   // Steps you can jump to: everything answered, plus the first unanswered one.
   const reachable = (n) => questions.slice(0, n).every((item) => answers[item.key]?.trim());
 
+  // The question on screen right now. A question sliding out still takes clicks for a
+  // moment, through its old handlers; this lets those clicks be told apart and ignored.
+  const shownIndex = useRef(index);
+  useEffect(() => {
+    shownIndex.current = index;
+  }, [index]);
+
   const go = useCallback((target) => {
     clearTimeout(advanceTimer.current);
     setPicked(null);
@@ -53,17 +60,31 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
     setIndex(target);
   }, [index]);
 
+  // Never draw with gaps: if anything is unanswered, go there instead.
+  const finish = useCallback((all) => {
+    const missing = questions.findIndex((item) => !all[item.key]?.trim() || checkText(all[item.key]));
+    if (missing >= 0) {
+      setPicked(null);
+      setDirection(-1);
+      setIndex(missing);
+      return;
+    }
+    onComplete(clean(all));
+  }, [onComplete]);
+
   const next = useCallback(() => {
     if (!answered) return;
     if (isLast) {
       clearTimeout(advanceTimer.current);
-      onComplete(clean(answers));
+      finish(answers);
     } else go(index + 1);
-  }, [answered, isLast, onComplete, answers, go, index]);
+  }, [answered, isLast, finish, answers, go, index]);
 
   // One tap per question: the pick pops, then the next question slides in.
   // On the last question the tap sends her off to be painted.
   const choose = useCallback((option) => {
+    const at = index;
+    if (at !== shownIndex.current) return; // a tap on the question sliding out
     const updated = { ...answers, [q.key]: option };
     setAnswers(updated);
     setCustomOpen((prev) => ({ ...prev, [q.key]: false }));
@@ -71,14 +92,15 @@ export default function Quiz({ initialAnswers = {}, onComplete, onExit }) {
     clearTimeout(advanceTimer.current);
     advanceTimer.current = setTimeout(() => {
       setPicked(null);
-      if (isLast) {
-        onComplete(clean(updated));
+      if (at === questions.length - 1) {
+        finish(updated);
         return;
       }
+      // To the question after this one, never "one more than wherever we are now".
       setDirection(1);
-      setIndex((n) => Math.min(n + 1, questions.length - 1));
+      setIndex(at + 1);
     }, ADVANCE_MS);
-  }, [answers, q.key, isLast, onComplete]);
+  }, [index, answers, q.key, finish]);
 
   const openCustom = () => {
     clearTimeout(advanceTimer.current);
