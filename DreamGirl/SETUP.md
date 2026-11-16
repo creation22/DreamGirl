@@ -25,6 +25,7 @@ Project > Settings > Environment Variables:
 | `DAILY_BUDGET_USD` | spend cap per UTC day, default `5` | no |
 | `LIMIT_PER_10_MIN` / `LIMIT_PER_DAY` | per-visitor limits, default `6` / `30` | no |
 | `SURPLUS_IMAGE_MODELS` | models to try in order, default `venice-flux-2-pro,flux.2-klein-4b` | no |
+| `GITHUB_TOKEN` | any GitHub token (no scopes), raises the star counter's GitHub limit from 60 to 5,000 calls an hour; the count is cached for a minute, so it's rarely needed | no |
 
 Redeploy after adding them.
 

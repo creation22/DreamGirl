@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 // On Vercel, files in /api run as serverless functions. `vite` and `vite preview` don't
 // know about them, so this serves the same handlers locally. Without SUPABASE_URL set,
 // they use a throwaway in-memory gallery.
-const API_ROUTES = new Set(["generate", "portraits", "report", "stats"]);
+const API_ROUTES = new Set(["generate", "portraits", "report", "stars", "stats"]);
 
 function localApi() {
   const handle = async (req, res, next) => {

@@ -1,6 +1,7 @@
 import { useContext } from "react";
-import { AtSign, Images } from "lucide-react";
-import { Heart } from "./Chrome";
+import { AtSign, Images, Star } from "lucide-react";
+import { GithubMark, Heart, StarCount } from "./Chrome";
+import { useGithubStars } from "../lib/useGithubStars";
 import { HandleDialogContext } from "../lib/dialog";
 import { useHandle } from "../lib/me";
 import { LINKS } from "../constants/links";
@@ -14,6 +15,7 @@ const delay = (ms) => ({ animationDelay: `${ms}ms` });
 function NightHeader() {
   const handle = useHandle();
   const openDialog = useContext(HandleDialogContext);
+  const stars = useGithubStars();
   return (
     <header className="relative z-10">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
@@ -22,9 +24,25 @@ function NightHeader() {
           <span className="hidden font-display text-xl min-[400px]:inline">DreamHer</span>
         </Link>
         <nav className="flex min-w-0 items-center gap-2 sm:gap-3" aria-label="Main">
+          <a
+            href={LINKS.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nb-chip-night"
+            aria-label={stars === null ? "Star DreamHer on GitHub" : `Star DreamHer on GitHub, ${stars} stars`}
+          >
+            <GithubMark className="h-4 w-4" />
+            <span className="hidden sm:inline">Star</span>
+            {stars !== null && (
+              <span className="-my-1.5 -mr-3 ml-0.5 flex items-center gap-1 self-stretch rounded-r-[5px] border-l-3 border-light bg-pink px-2 text-ink">
+                <Star className="h-3.5 w-3.5 fill-ink" strokeWidth={2.5} aria-hidden />
+                <StarCount stars={stars} />
+              </span>
+            )}
+          </a>
           <Link to="/gallery" className="nb-chip-night">
             <Images className="h-4 w-4" aria-hidden />
-            Gallery
+            <span className="hidden min-[440px]:inline">Gallery</span>
           </Link>
           <button type="button" onClick={openDialog} title="Change your X username" className="nb-chip-night max-w-[9.5rem]">
             <AtSign className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />

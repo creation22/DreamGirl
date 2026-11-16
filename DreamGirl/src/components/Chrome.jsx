@@ -1,9 +1,64 @@
 import { useContext } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { AtSign, Coffee, Images, Star } from "lucide-react";
 import { Link } from "../lib/router";
 import { useHandle } from "../lib/me";
 import { HandleDialogContext } from "../lib/dialog";
 import { LINKS } from "../constants/links";
+import { formatStars, useGithubStars } from "../lib/useGithubStars";
+
+const MotionSpan = motion.span;
+
+/** GitHub's mark (lucide no longer ships brand icons). */
+export function GithubMark({ className = "" }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden>
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+}
+
+/** The live star count. A new number rolls up into place. */
+export function StarCount({ stars }) {
+  return (
+    <span className="inline-grid overflow-hidden tabular-nums">
+      <AnimatePresence initial={false} mode="popLayout">
+        <MotionSpan
+          key={stars}
+          className="col-start-1 row-start-1"
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "-100%", opacity: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {formatStars(stars)}
+        </MotionSpan>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+function GithubChip() {
+  const stars = useGithubStars();
+  return (
+    <a
+      href={LINKS.github}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`${chipBtn} hidden md:flex`}
+      aria-label={stars === null ? "Star DreamHer on GitHub" : `Star DreamHer on GitHub, ${stars} stars`}
+    >
+      <GithubMark className="h-4 w-4" />
+      Star
+      {stars !== null && (
+        <span className="-my-1.5 -mr-3 ml-0.5 flex items-center gap-1 self-stretch rounded-r-[5px] border-l-3 border-ink bg-pink px-2">
+          <Star className="h-3.5 w-3.5 fill-ink" strokeWidth={2.5} aria-hidden />
+          <StarCount stars={stars} />
+        </span>
+      )}
+    </a>
+  );
+}
 
 const HEART =
   "M254.791,33.251c-46.555,0-76.089,51.899-83.079,51.899c-6.111,0-34.438-51.899-83.082-51.899c-47.314,0-85.947,39.021-88.476,86.27c-1.426,26.691,7.177,47.001,19.304,65.402c24.222,36.76,130.137,125.248,152.409,125.248c22.753,0,127.713-88.17,152.095-125.247c12.154-18.483,20.731-38.711,19.304-65.402C340.738,72.272,302.107,33.251,254.791,33.251";
@@ -54,10 +109,7 @@ export function Header({ onHome, children }) {
               Gallery
             </Link>
             <HandleChip />
-            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden md:flex`}>
-              <Star className="h-4 w-4" aria-hidden />
-              Star on GitHub
-            </a>
+            <GithubChip />
             <a href={LINKS.coffee} target="_blank" rel="noopener noreferrer" className={`${chipBtn} hidden lg:flex`}>
               <Coffee className="h-4 w-4" aria-hidden />
               Buy me a coffee
