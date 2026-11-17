@@ -10,11 +10,39 @@ const MINOR_TERMS = [
 ];
 
 const EXPLICIT_TERMS = [
-  "nude", "nudes", "naked", "nsfw", "topless", "bottomless", "porn", "porno", "pornographic", "sex",
-  "sexual", "explicit", "nipple", "nipples", "genital", "genitals", "vagina", "penis", "lingerie",
-  "bikini", "underwear", "panties", "thong", "see-through", "see through", "fetish", "bdsm", "hentai",
-  "erotic", "xxx", "onlyfans",
+  "nude", "nudes", "nudity", "naked", "nakid", "nekkid", "nsfw", "topless", "bottomless", "porn", "porno",
+  "pornographic", "sex", "sexy", "sexual", "explicit", "nipple", "nipples", "areola", "genital", "genitals",
+  "vagina", "pussy", "penis", "breast", "breasts", "boob", "boobs", "tits", "titties", "butt", "ass",
+  "lingerie", "bikini", "bra", "bralette", "underwear", "undies", "panties", "thong", "g-string", "gstring",
+  "see-through", "see through", "sheer", "transparent", "fetish", "bdsm", "bondage", "hentai", "ecchi",
+  "erotic", "xxx", "onlyfans", "unclothed", "undressed", "undressing", "unclad", "disrobed", "bare-chested",
+  "barechested", "strip", "stripping", "stripper", "striptease", "skinny dip", "skinny dipping",
+  "birthday suit", "au naturel", "in the buff", "body paint", "bodypaint", "towel", "bathtub", "shower",
+  "bed sheet", "bedsheet", "covered by", "covering herself", "censored", "seductive", "seducing", "aroused",
+  "lewd", "horny", "slutty", "slut", "provocative", "revealing", "skimpy", "cleavage", "spread legs",
 ];
+
+// "wearing nothing", "no clothes", "without a top", "nothing on", "bare skin" and the like.
+const UNDRESSED_RE = new RegExp(
+  [
+    String.raw`\b(?:wearing|wears|wear|in|with|has|having)\s+(?:absolutely\s+|just\s+|only\s+)?(?:nothing|none|no\s*thing)\b`,
+    String.raw`\bnothing\s+(?:on|at\s+all|but|except|else)\b`,
+    String.raw`\b(?:no|without|zero|minus|lacking|missing)\s+(?:any\s+|a\s+|her\s+|the\s+)?(?:clothes|clothing|clothed|garments?|outfit|dress|top|tops|shirt|blouse|bra|pants|trousers|skirt|bottoms?|underwear|panties|cover(?:ing)?|fabric)\b`,
+    String.raw`\b(?:takes?|taking|took|pulls?|pulling|slips?|slipping)\s+(?:off|down)\b`,
+    String.raw`\b(?:bare|exposed|uncovered)\s+(?:skin|body|chest|breasts?|bust|torso|butt|bottom|hips|naked)\b`,
+    String.raw`\bnot\s+wearing\b`,
+  ].join("|"),
+  "i",
+);
+
+// Spelled-out or disguised words: "n u d e", "n.a.k.e.d", "nak3d", "p0rn".
+const SQUASHED_TERMS = ["nude", "naked", "nsfw", "topless", "porn", "hentai", "nipple", "lingerie", "unclothed", "undressed"];
+const LEET = { 0: "o", 1: "i", 3: "e", 4: "a", 5: "s", 7: "t", "@": "a", $: "s", "!": "i" };
+const squash = (t) =>
+  t
+    .toLowerCase()
+    .replace(/[013457@$!]/g, (c) => LEET[c])
+    .replace(/[^a-z]/g, "");
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const wordRe = (terms) => new RegExp(`\\b(?:${terms.map(escape).join("|")})\\b`, "i");
@@ -28,10 +56,11 @@ const AGE_RE = /\b(?:age\s*)?(1[0-7]|[1-9])\s*(?:yo|y\/o|y\.o\.|yrs?|years?(?:\s
 export function checkText(text) {
   if (!text) return null;
   const t = String(text).normalize("NFKC");
-  if (MINOR_RE.test(t) || AGE_RE.test(t)) {
+  const squashed = squash(t);
+  if (MINOR_RE.test(t) || AGE_RE.test(t) || /(?:loli|teen|underage|schoolgirl|child)/.test(squashed)) {
     return "DreamHer only draws adult women. Describe her look or style without age words.";
   }
-  if (EXPLICIT_RE.test(t)) {
+  if (EXPLICIT_RE.test(t) || UNDRESSED_RE.test(t) || SQUASHED_TERMS.some((w) => squashed.includes(w))) {
     return "The public gallery keeps things clothed and safe for work. Try another description.";
   }
   return null;
