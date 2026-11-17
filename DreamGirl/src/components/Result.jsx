@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Coffee, Download, PencilLine, RefreshCw, RotateCcw, Share2 } from "lucide-react";
 import { Header, Photo } from "./Chrome";
 import PriceTag from "./PriceTag";
+import OpusBanner from "./OpusBanner";
 import { LINKS } from "../constants/links";
 import { NIGHT } from "../constants/night";
 import { captionFor } from "../constants/question";
@@ -262,6 +263,9 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
           </p>
         </div>
       </main>
+
+      {/* Shown once she's drawn, so it never competes with the wait. */}
+      {status === "ready" && <OpusBanner />}
     </div>
   );
 }

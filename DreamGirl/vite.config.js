@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 // On Vercel, files in /api run as serverless functions. `vite` and `vite preview` don't
 // know about them, so this serves the same handlers locally. Without SUPABASE_URL set,
 // they use a throwaway in-memory gallery.
-const API_ROUTES = new Set(["generate", "portraits", "report", "stars", "stats"]);
+const API_ROUTES = new Set(["deal", "generate", "portraits", "report", "stars", "stats"]);
 
 // Local only: DREAMHER_SEED_DIR=<folder with seed.json + pictures> fills the in-memory
 // gallery at start, e.g. with model test pictures. Entries: {file, username, caption,
