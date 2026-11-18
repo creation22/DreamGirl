@@ -81,7 +81,7 @@ function Support({ costMicro }) {
   );
 }
 
-export default function Result({ answers, handle, onRestart, onEdit }) {
+export default function Result({ answers, handle, onRestart, onEdit, onQuota }) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [data, setData] = useState(null); // {item, receipt, prompt}
@@ -105,6 +105,7 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
         if (current.current !== attempt) return;
         setData(d);
         setStatus("ready");
+        if (d.quota) onQuota?.(d.quota);
       })
       .catch((e) => {
         if (current.current !== attempt) return;
@@ -135,6 +136,7 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
   };
 
+  const left = data?.quota ? data.quota.remaining : null;
   const caption = captionFor(answers) || "your dream girl";
   const elapsed = Math.max(0, Math.round((now - startedAt) / 1000));
   const loading = status === "loading";
@@ -189,7 +191,9 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
             {status === "ready" ? "Here she is." : status === "error" ? "Almost there." : "She's on her way."}
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-neutral-700">
-            Not quite her? Draw her again for a new take on the same answers, or change an answer.
+            {left === 0
+              ? "That was your last of three portraits. Thanks for dreaming with DreamHer."
+              : "Not quite her? Draw her again for a new take on the same answers, or change an answer."}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -204,9 +208,14 @@ export default function Result({ answers, handle, onRestart, onEdit }) {
                 Download
               </button>
             )}
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} disabled={loading} className="nb-btn-white">
+            <button
+              type="button"
+              onClick={() => setAttempt((n) => n + 1)}
+              disabled={loading || left === 0}
+              className="nb-btn-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
               <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
-              Draw her again
+              {left === 0 ? "No portraits left" : left ? `Draw her again (${left} left)` : "Draw her again"}
             </button>
             <button type="button" onClick={share} disabled={loading} className="nb-btn-white">
               <Share2 className="h-4 w-4" strokeWidth={3} aria-hidden />

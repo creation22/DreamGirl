@@ -38,3 +38,6 @@ export function listPortraits({ user, before, limit = 24 } = {}) {
 export const reportPortrait = (id) => call("/api/report", { method: "POST", body: { id } });
 
 export const getStats = () => call("/api/stats");
+
+/** How many portraits this visitor has left. Asking also notes the visit. */
+export const getQuota = () => call("/api/quota");
