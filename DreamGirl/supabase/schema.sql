@@ -78,15 +78,18 @@ begin
 end;
 $$;
 
--- Totals for the "drawn for $X on Surplus" counters. Counts every portrait drawn,
--- including removed and hidden ones, because that money was really spent.
+-- Totals for the "drawn for $X on Surplus" counters. Counts the portraits you can
+-- actually see in the gallery -- same filter as the listing -- so the number next to the
+-- grid matches the grid. Hidden and removed ones are left out: the money was really spent,
+-- but a visitor counting cards shouldn't be told a bigger number. The average per portrait,
+-- which is the point of the counter, is the same either way.
 create or replace function public.portrait_stats()
 returns json language sql stable security definer set search_path = public as $$
   select json_build_object(
     'portraits', count(*),
     'cost_micro', coalesce(sum(cost_micro), 0),
     'list_micro', coalesce(sum(list_micro), 0)
-  ) from portraits;
+  ) from portraits where not hidden and username is not null;
 $$;
 
 -- Notes a visit: one row per IP hash, counted up on every later visit.
