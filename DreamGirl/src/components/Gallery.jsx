@@ -64,10 +64,14 @@ function PortraitCard({ item, showUser }) {
             className="h-full w-full object-cover"
           />
         )}
-        <PriceTag costMicro={item.costMicro} listMicro={item.listMicro} className="absolute left-2 top-2" />
+        {/* Bottom-left: faces sit in the upper half of nearly every portrait. */}
+        <PriceTag costMicro={item.costMicro} listMicro={item.listMicro} className="absolute bottom-2 left-2" />
       </div>
       <div className="flex flex-1 flex-col gap-2 bg-pink-soft px-3 py-2.5">
-        <p className="text-xs font-semibold leading-snug sm:text-sm">{item.caption}</p>
+        {/* Typed answers can run long; three lines keeps the cards an even height. */}
+        <p className="line-clamp-3 text-xs font-semibold leading-snug sm:text-sm" title={item.caption}>
+          {item.caption}
+        </p>
         <div className="mt-auto flex items-center justify-between gap-2 text-xs">
           <span className="min-w-0 truncate">
             {showUser && (
@@ -77,14 +81,16 @@ function PortraitCard({ item, showUser }) {
                 </Link>{" "}
               </>
             )}
-            <span className="text-neutral-700">{timeAgo(item.createdAt)}</span>
+            {/* On a narrow card there's no room beside the username, and the name matters more.
+                On the one-user page there's no name here, so the time stays. */}
+            <span className={showUser ? "hidden text-neutral-700 sm:inline" : "text-neutral-700"}>{timeAgo(item.createdAt)}</span>
           </span>
           <button
             type="button"
             onClick={report}
             disabled={busy || !!note}
             aria-label={`Report portrait by @${item.username}`}
-            className="flex shrink-0 items-center gap-1 font-semibold text-neutral-700 hover:text-pink-deep disabled:opacity-50"
+            className="-my-1.5 flex shrink-0 items-center gap-1 py-1.5 font-semibold text-neutral-700 hover:text-pink-deep disabled:opacity-50"
           >
             <Flag className="h-3.5 w-3.5" aria-hidden />
             Report

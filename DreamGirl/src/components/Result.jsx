@@ -140,7 +140,8 @@ export default function Result({ answers, handle, onRestart, onEdit, onQuota }) 
   const caption = captionFor(answers) || "your dream girl";
   const elapsed = Math.max(0, Math.round((now - startedAt) / 1000));
   const loading = status === "loading";
-  const link = "inline-flex items-center gap-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
+  // py-1.5 keeps these comfortably tappable on a phone without changing how they read.
+  const link = "inline-flex items-center gap-1.5 py-1.5 font-semibold underline decoration-2 underline-offset-4 hover:text-pink-deep";
 
   return (
     <div className="flex min-h-[100svh] flex-col overflow-x-clip">
@@ -196,14 +197,15 @@ export default function Result({ answers, handle, onRestart, onEdit, onQuota }) 
               : "Not quite her? Draw her again for a new take on the same answers, or change an answer."}
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          {/* A phone stacks these, so make them full width rather than a ragged left edge. */}
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {status === "ready" && data ? (
-              <a href={downloadHref(data.item.imageUrl, data.item.id)} download="dreamher.png" className="nb-btn-pink">
+              <a href={downloadHref(data.item.imageUrl, data.item.id)} download="dreamher.png" className="nb-btn-pink w-full sm:w-auto">
                 <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
                 Download
               </a>
             ) : (
-              <button type="button" disabled className="nb-btn-pink">
+              <button type="button" disabled className="nb-btn-pink w-full sm:w-auto">
                 <Download className="h-5 w-5" strokeWidth={2.5} aria-hidden />
                 Download
               </button>
@@ -212,12 +214,12 @@ export default function Result({ answers, handle, onRestart, onEdit, onQuota }) 
               type="button"
               onClick={() => setAttempt((n) => n + 1)}
               disabled={loading || left === 0}
-              className="nb-btn-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="nb-btn-white w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               <RefreshCw className="h-4 w-4" strokeWidth={3} aria-hidden />
               {left === 0 ? "No portraits left" : left ? `Draw her again (${left} left)` : "Draw her again"}
             </button>
-            <button type="button" onClick={share} disabled={loading} className="nb-btn-white">
+            <button type="button" onClick={share} disabled={loading} className="nb-btn-white w-full sm:w-auto">
               <Share2 className="h-4 w-4" strokeWidth={3} aria-hidden />
               Share
             </button>
