@@ -3,6 +3,9 @@
  * follow natural language better than tag lists). Every option in constants/question.js
  * has a phrase here; anything typed in "Something else" is used as written.
  *
+ * The angle, framing and light are picked at random each call (see shotFor), so the same
+ * answers don't give the same picture twice. Everything a visitor chose is kept exactly.
+ *
  * @param {Object} answers - keyed by the `key` of each question.
  * @returns {{positive: string, negative: string} | null}
  */
@@ -114,7 +117,7 @@ const SETTING = {
 
 // [how the picture is made, finishing details]
 const STYLE = {
-  "realistic photo": ["A realistic portrait photograph", "shot on a full-frame camera with an 85mm lens, natural skin texture, soft natural light, shallow depth of field"],
+  "realistic photo": ["A realistic portrait photograph", "shot on a full-frame camera with an 85mm lens, natural skin texture, shallow depth of field"],
   "cinematic film still": ["A cinematic film still", "anamorphic lens, moody colour grading, soft film grain, shallow depth of field"],
   "vintage film photo": ["A vintage 35mm film photograph", "warm faded colours, gentle light leaks, analog grain"],
   "soft oil painting": ["A soft oil painting portrait", "visible brushstrokes, painterly light, classical composition"],
@@ -125,6 +128,75 @@ const STYLE = {
   "comic book": ["A comic book illustration", "bold ink lines, halftone shading, vivid flat colours"],
   "fantasy art": ["A fantasy art portrait", "ethereal glow, intricate detail, rich painterly colour"],
 };
+
+// Two people who answer the quiz the same way should still get different pictures, and
+// "draw her again" should be worth pressing. Nothing else can vary the draw: no image
+// model on Surplus accepts a seed (all 85 checked, Nov 2026), so an identical prompt
+// returns an identical picture. One angle, one framing and one light are picked at
+// random per request -- hundreds of combinations, and the quiz answers still decide
+// everything that matters about her.
+const PHOTO_SHOT = {
+  angle: [
+    "Shot straight on at eye level",
+    "Shot from a slightly high angle",
+    "Shot from just below eye level",
+    "Shot in three-quarter profile",
+    "Caught as she turns back over her shoulder",
+    "Shot from the side as she looks away",
+  ],
+  framing: [
+    "head and shoulders filling the frame",
+    "framed from the waist up",
+    "a loose frame with room around her",
+    "a close crop on her face",
+    "framed off-centre, with space on one side",
+  ],
+  light: [
+    "lit by window light from the left",
+    "backlit, a warm rim around her hair",
+    "in soft overcast light",
+    "in low golden sunlight",
+    "lit by a single warm lamp to one side",
+    "in cool, even daylight",
+  ],
+};
+
+const DRAWN_SHOT = {
+  angle: [
+    "Drawn straight on at eye level",
+    "Drawn from a slightly high angle",
+    "Drawn from just below eye level",
+    "Drawn in three-quarter view",
+    "Drawn as she turns back over her shoulder",
+    "Drawn from the side as she looks away",
+  ],
+  framing: [
+    "head and shoulders filling the frame",
+    "framed from the waist up",
+    "a loose frame with room around her",
+    "a close crop on her face",
+    "framed off-centre, with space on one side",
+  ],
+  light: [
+    "light falling from the left",
+    "a bright rim of light behind her",
+    "soft, even light",
+    "warm low light and long shadows",
+    "strong contrast between light and shadow",
+    "gentle, diffused light",
+  ],
+};
+
+// Styles made with a camera; everything else is drawn or painted.
+const PHOTO_STYLES = new Set(["realistic photo", "cinematic film still", "vintage film photo"]);
+
+const one = (list) => list[Math.floor(Math.random() * list.length)];
+
+/** One sentence of angle, framing and light, in the right vocabulary for the style. */
+function shotFor(style) {
+  const shot = PHOTO_STYLES.has(style) ? PHOTO_SHOT : DRAWN_SHOT;
+  return `${one(shot.angle)}, ${one(shot.framing)}, ${one(shot.light)}.`;
+}
 
 const pick = (map, value, fallback) => {
   const v = value?.trim();
@@ -160,8 +232,10 @@ export function generatePrompt(answers) {
     `She has ${hair}, and she is ${expression}.`,
     `She is wearing ${outfit}${setting ? `, ${setting}` : ""}.`,
     `Her vibe is ${aura}.`,
+    // The framing and the light come from here now, so they differ from one draw to the next.
+    shotFor(answers.imageGenerationStyle?.trim().toLowerCase()),
     // Always an adult; otherwise she's drawn as described.
-    `Adult woman, upper-body portrait. ${finish.charAt(0).toUpperCase()}${finish.slice(1)}, beautiful lighting, high detail.`,
+    `Adult woman. ${finish.charAt(0).toUpperCase()}${finish.slice(1)}, high detail.`,
   ];
 
   const negative =
