@@ -167,7 +167,8 @@ function memoryStore() {
       seen.set(ipHash, (seen.get(ipHash) || 0) + 1);
     },
     async stats() {
-      const rows = db.rows;
+      // Same filter as the gallery listing, matching portrait_stats() in the schema.
+      const rows = db.rows.filter((r) => !r.hidden && r.username);
       return {
         portraits: rows.length,
         cost_micro: rows.reduce((s, r) => s + r.cost_micro, 0),
