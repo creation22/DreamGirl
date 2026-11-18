@@ -3,6 +3,7 @@ import { savedPct, usd } from "../utils/money";
 /**
  * The sticker on a portrait: what it really cost to draw, the list price struck
  * through, and the percent saved. `large` on the result page, small on gallery cards.
+ * The struck price is hidden on phones, where a full-width sticker covers the portrait.
  */
 export default function PriceTag({ costMicro, listMicro, large = false, className = "" }) {
   if (!(costMicro > 0)) return null;
@@ -18,7 +19,8 @@ export default function PriceTag({ costMicro, listMicro, large = false, classNam
       <span className={`flex items-baseline gap-1.5 ${pad}`}>
         {large && <span className="text-xs font-semibold text-neutral-600">Cost</span>}
         {usd(costMicro)}
-        {pct !== null && <s className="font-semibold text-neutral-500">{usd(listMicro)}</s>}
+        {/* No room for the struck price on a phone: the cost and the percent carry it. */}
+        {pct !== null && <s className="hidden font-semibold text-neutral-500 sm:inline">{usd(listMicro)}</s>}
       </span>
       {pct !== null && <span className={`border-l-3 border-ink bg-pink ${pad}`}>{pct}% off</span>}
     </p>
