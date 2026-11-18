@@ -55,8 +55,9 @@ function NightHeader() {
 }
 
 /** One screen: the photograph, one line, one button, in the app's own shapes. */
-export default function Landing({ onStart }) {
+export default function Landing({ onStart, quota }) {
   const stats = useSurplusStats();
+  const usedUp = !!quota && quota.remaining <= 0;
 
   return (
     <div className="grain relative isolate flex h-[100svh] min-h-[640px] flex-col overflow-hidden bg-void text-mist">
@@ -89,8 +90,13 @@ export default function Landing({ onStart }) {
             Answer ten questions and she steps out of the light, painted in seconds.
           </p>
           <div className="mt-7 flex animate-rise flex-wrap items-center gap-x-5 gap-y-4" style={delay(900)}>
-            <button type="button" onClick={onStart} className="nb-btn-night text-lg">
-              Describe her
+            <button
+              type="button"
+              onClick={onStart}
+              disabled={usedUp}
+              className="nb-btn-night text-lg disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {usedUp ? "You've used your portraits" : "Describe her"}
             </button>
             <Link to="/gallery" className="nb-chip-night px-4 py-2.5 text-[15px]">
               See who others dreamed up
@@ -104,7 +110,11 @@ export default function Landing({ onStart }) {
                   <strong className="text-light">{stats.portraits.toLocaleString("en-US")}</strong> dreamed up so far.{" "}
                 </>
               ) : null}
-              Free, no sign-up.
+              {usedUp ? (
+                "Three portraits each. Yours are used up."
+              ) : (
+                <>Free, no sign-up.{quota ? ` ${quota.remaining} of ${quota.limit} portraits left.` : ""}</>
+              )}
             </p>
             <nav className="flex gap-5 font-medium" aria-label="More">
               <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="hover:text-light">GitHub</a>

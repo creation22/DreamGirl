@@ -8,6 +8,7 @@ import HandleDialog from "./components/HandleDialog";
 import { HandleDialogContext } from "./lib/dialog";
 import { matchRoute, navigate, usePath } from "./lib/router";
 import { useHandle } from "./lib/me";
+import { getQuota } from "./lib/api";
 
 export default function App() {
   const route = matchRoute(usePath());
@@ -18,6 +19,13 @@ export default function App() {
   const [dialogOpen, setDialogOpen] = useState(false);
   // "Describe her" without a username: ask for it first, then start.
   const [asking, setAsking] = useState(false);
+  // Three portraits per IP. Asked for on load, which is also how the visit gets noted;
+  // null until the answer lands, and the server has the last word in any case.
+  const [quota, setQuota] = useState(null);
+
+  useEffect(() => {
+    getQuota().then(setQuota).catch(() => {});
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -31,11 +39,14 @@ export default function App() {
     navigate("/");
   }, []);
 
+  const usedUp = !!quota && quota.remaining <= 0;
+
   // The landing page and gallery are open to everyone; the questions need an X username.
   const start = useCallback(() => {
+    if (usedUp) return;
     if (handle) begin();
     else setAsking(true);
-  }, [handle, begin]);
+  }, [usedUp, handle, begin]);
 
   const closeDialog = (saved) => {
     if (asking && saved) begin();
@@ -59,10 +70,10 @@ export default function App() {
           doesn't start a new drawing or post the portrait twice. */}
       {page === "result" && handle && (
         <div hidden={!atHome}>
-          <Result answers={answers} handle={handle} onEdit={() => setPage("quiz")} onRestart={home} />
+          <Result answers={answers} handle={handle} onQuota={setQuota} onEdit={() => setPage("quiz")} onRestart={home} />
         </div>
       )}
-      {atHome && !inApp && <Landing onStart={start} />}
+      {atHome && !inApp && <Landing onStart={start} quota={quota} />}
       {inApp && page === "quiz" && (
         <Quiz
           initialAnswers={answers}

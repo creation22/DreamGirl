@@ -88,19 +88,15 @@ function supabaseStore(url, key) {
       const res = await rest(`/portraits?${q}`);
       return (await res.json()).map(toItem);
     },
-    async countSince(ipHash, sinceIso) {
-      const q = new URLSearchParams({ select: "id", ip_hash: `eq.${ipHash}`, created_at: `gt.${sinceIso}`, limit: "1" });
+    // Every portrait ever drawn from this IP, hidden and removed ones included.
+    async countForIp(ipHash) {
+      const q = new URLSearchParams({ select: "id", ip_hash: `eq.${ipHash}`, limit: "1" });
       const res = await rest(`/portraits?${q}`, { prefer: "count=exact" });
       return Number((res.headers.get("content-range") || "*/0").split("/")[1]) || 0;
     },
-    async countSinceForName(username, sinceIso) {
-      const q = new URLSearchParams({ select: "id", username_lc: `eq.${username.toLowerCase()}`, created_at: `gt.${sinceIso}`, limit: "1" });
-      const res = await rest(`/portraits?${q}`, { prefer: "count=exact" });
-      return Number((res.headers.get("content-range") || "*/0").split("/")[1]) || 0;
-    },
-    async spentSince(sinceIso) {
-      const res = await rest("/rpc/spent_since", { method: "POST", body: { p_since: sinceIso } });
-      return Number(await res.json()) || 0;
+    // A visit: when this IP first opened the site, when it last did, how often.
+    async trackVisit(ipHash) {
+      await rest("/rpc/track_visit", { method: "POST", body: { p_ip_hash: ipHash } });
     },
     async stats() {
       const res = await rest("/rpc/portrait_stats", { method: "POST", body: {} });
@@ -112,8 +108,8 @@ function supabaseStore(url, key) {
       const rows = await res.json();
       return rows[0] ? toItem(rows[0]) : null;
     },
-    // The row is kept (hidden, no username) so its cost still counts toward rate limits and
-    // the daily budget; only the picture is deleted.
+    // The row is kept (hidden, no username) so it still counts toward this IP's three
+    // portraits; only the picture is deleted.
     async remove(id, tokenHash) {
       const q = new URLSearchParams({ id: `eq.${id}`, delete_token_hash: `eq.${tokenHash}`, hidden: "is.false" });
       const res = await rest(`/portraits?${q}&select=storage_path`, {
@@ -143,7 +139,7 @@ async function appendDevLog(entry) {
 }
 
 function memoryStore() {
-  const db = (globalThis.__dreamherMemory ??= { rows: [], reports: new Set(), images: new Map() });
+  const db = (globalThis.__dreamherMemory ??= { rows: [], reports: new Set(), images: new Map(), visits: new Map() });
   const listed = () =>
     db.rows.filter((r) => !r.hidden && r.username).sort((a, b) => b.created_at.localeCompare(a.created_at));
   return {
@@ -163,15 +159,12 @@ function memoryStore() {
         .slice(0, limit)
         .map(toItem);
     },
-    async countSince(ipHash, sinceIso) {
-      return db.rows.filter((r) => r.ip_hash === ipHash && r.created_at > sinceIso).length;
+    async countForIp(ipHash) {
+      return db.rows.filter((r) => r.ip_hash === ipHash).length;
     },
-    async countSinceForName(username, sinceIso) {
-      const lc = username.toLowerCase();
-      return db.rows.filter((r) => r.username?.toLowerCase() === lc && r.created_at > sinceIso).length;
-    },
-    async spentSince(sinceIso) {
-      return db.rows.filter((r) => r.created_at >= sinceIso).reduce((s, r) => s + r.cost_micro, 0);
+    async trackVisit(ipHash) {
+      const seen = (db.visits ??= new Map());
+      seen.set(ipHash, (seen.get(ipHash) || 0) + 1);
     },
     async stats() {
       const rows = db.rows;

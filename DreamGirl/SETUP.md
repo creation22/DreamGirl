@@ -8,7 +8,10 @@ through the Vercel functions in `api/`.
 
 1. Create a free project at supabase.com.
 2. SQL Editor > New query > paste all of `supabase/schema.sql` > Run.
-   This creates the `portraits` tables, the totals functions and a public `portraits` storage bucket.
+   This creates the `portraits`, `visitors` and `prompt_log` tables, the totals functions and a
+   public `portraits` storage bucket. Re-running the whole file is safe (everything is
+   `if not exists` / `or replace`); the notes at the bottom list what to drop if you set this
+   up before the three-per-IP limit.
 3. Project Settings > API: copy the **Project URL** and a **secret key**
    (`sb_secret_...`, or the legacy `service_role` key).
 
@@ -22,11 +25,8 @@ Project > Settings > Environment Variables:
 | `SUPABASE_URL` | `https://<project>.supabase.co` | yes |
 | `SUPABASE_SECRET_KEY` | the Supabase secret key | yes |
 | `IP_HASH_SALT` | any long random string | recommended |
-| `DAILY_BUDGET_USD` | spend cap per UTC day, default `5` | no |
-| `LIMIT_PER_10_MIN` / `LIMIT_PER_DAY` | per-visitor limits, default `6` / `30` | no |
+| `LIMIT_PER_IP` | portraits one IP may ever draw, default `3` | no |
 | `SURPLUS_IMAGE_MODELS` | models to try in order, default `venice-z-image-turbo,venice-flux-1.1,flux.2-klein-4b` | no |
-| `LIMIT_PER_USERNAME_DAY` | portraits per username per 24 h, default `30` | no |
-| `HOURLY_BUDGET_USD` | spend cap per hour, default `1`, so one person can't use up the day in minutes | no |
 | `TURNSTILE_SECRET_KEY` + `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile keys (free) for the bot check; both or neither | recommended |
 | `GITHUB_TOKEN` | any GitHub token (no scopes), raises the star counter's GitHub limit from 60 to 5,000 calls an hour; the count is cached for a minute, so it's rarely needed | no |
 
@@ -66,11 +66,25 @@ different visitors hide a portrait. To hide something by hand, see the bottom of
 
 Every request to draw a portrait is kept in the `prompt_log` table: the ten answers, the exact prompt sent to Surplus, the username as typed, a hashed IP, and what happened (`drawn`, `blocked`, `limited`, `failed`, `invalid`). Blocked and failed requests are kept too. Read it in Supabase (Table Editor, or the queries at the bottom of `supabase/schema.sql`). Running locally without Supabase, it goes to `.dev-data/prompt_log.jsonl` instead.
 
-## Stopping abuse (there's no login)
+## The limit: three portraits per IP
 
-Each layer catches a different kind of abuse:
+There's no login, so a visitor is their IP — hashed with `IP_HASH_SALT`, never stored raw
+(`visitorHash` in `api/_lib/http.js`). Each IP gets **3 portraits, for good**, and that's the
+only limit: no per-hour burst, no daily reset, no spending cap.
 
-1. **Spending caps** (`DAILY_BUDGET_USD`, `HOURLY_BUDGET_USD`): the hard ceiling. Nothing anyone does can spend more than this. With Z-Image Turbo at about $0.004 a portrait, $5 a day is about 1,250 portraits.
-2. **Per visitor** (hashed IP): 6 in 10 minutes, 30 a day.
-3. **Per username**: 30 a day, however many IPs it comes from.
-4. **Bot check** (Cloudflare Turnstile): stops scripts calling `/api/generate` directly. Free at dash.cloudflare.com → Turnstile → Add site (domain `dreamher.vercel.app`, mode Managed). Put the site key in `VITE_TURNSTILE_SITE_KEY` and the secret in `TURNSTILE_SECRET_KEY`, then redeploy. Real visitors almost never see it.
+- **Where it's enforced:** `api/generate.js` counts that IP's rows in `portraits` before
+  drawing anything, and refuses at 3. Removed and hidden portraits still count — the row
+  stays behind on purpose.
+- **Where the visit is noted:** `/api/quota`, which the site calls on load. It upserts the
+  hashed IP into `visitors` (`visits`, `first_seen`, `last_seen`) and answers with
+  `{used, limit, remaining}`, so the landing page can show what's left and grey out the
+  button. The server still does the real check — the browser's copy is only for show.
+- **Changing it:** set `LIMIT_PER_IP` and redeploy. To clear one IP, delete its rows from
+  `portraits` (see the notes at the bottom of `supabase/schema.sql`).
+- **What it doesn't stop:** a new IP is a new visitor, so mobile data, a VPN or a proxy gets
+  3 more. The bot check is what makes that expensive at scale — **Cloudflare Turnstile**,
+  free at dash.cloudflare.com → Turnstile → Add site (domain `dreamher.vercel.app`, mode
+  Managed). Put the site key in `VITE_TURNSTILE_SITE_KEY` and the secret in
+  `TURNSTILE_SECRET_KEY`, then redeploy. Real visitors almost never see it. Until both keys
+  are set, the check is off and nothing but the per-IP count stands between a script and the
+  Surplus bill.

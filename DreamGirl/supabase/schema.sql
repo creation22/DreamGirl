@@ -25,9 +25,16 @@ create table if not exists public.portraits (
 
 create index if not exists portraits_recent on public.portraits (created_at desc) where username is not null and not hidden;
 create index if not exists portraits_by_user on public.portraits (username_lc, created_at desc) where username is not null and not hidden;
-create index if not exists portraits_by_ip on public.portraits (ip_hash, created_at desc);
-create index if not exists portraits_by_name on public.portraits (username_lc, created_at desc);
-create index if not exists portraits_by_day on public.portraits (created_at);
+create index if not exists portraits_by_ip on public.portraits (ip_hash);  -- the three-per-IP count
+
+-- Everyone who opens the site, by hashed IP: when we first saw them, when we last did,
+-- and how many times. Written by /api/quota on page load; the raw IP is never stored.
+create table if not exists public.visitors (
+  ip_hash    text primary key,
+  visits     integer not null default 1,
+  first_seen timestamptz not null default now(),
+  last_seen  timestamptz not null default now()
+);
 
 -- One report per visitor per portrait; three reports from different visitors hide it.
 create table if not exists public.portrait_reports (
@@ -60,6 +67,7 @@ create index if not exists prompt_log_by_status on public.prompt_log (status, cr
 alter table public.portraits enable row level security;
 alter table public.portrait_reports enable row level security;
 alter table public.prompt_log enable row level security;
+alter table public.visitors enable row level security;
 
 create or replace function public.report_portrait(p_id uuid, p_ip_hash text)
 returns void language plpgsql security definer set search_path = public as $$
@@ -81,15 +89,16 @@ returns json language sql stable security definer set search_path = public as $$
   ) from portraits;
 $$;
 
--- Spend since a time, for the daily budget cap.
-create or replace function public.spent_since(p_since timestamptz)
-returns bigint language sql stable security definer set search_path = public as $$
-  select coalesce(sum(cost_micro), 0) from portraits where created_at >= p_since;
+-- Notes a visit: one row per IP hash, counted up on every later visit.
+create or replace function public.track_visit(p_ip_hash text)
+returns void language sql security definer set search_path = public as $$
+  insert into visitors (ip_hash) values (p_ip_hash)
+  on conflict (ip_hash) do update set visits = visitors.visits + 1, last_seen = now();
 $$;
 
 revoke execute on function public.report_portrait(uuid, text) from public, anon, authenticated;
 revoke execute on function public.portrait_stats() from public, anon, authenticated;
-revoke execute on function public.spent_since(timestamptz) from public, anon, authenticated;
+revoke execute on function public.track_visit(text) from public, anon, authenticated;
 
 -- Public bucket for the images. Writes need the secret key; reads are by URL.
 insert into storage.buckets (id, name, public)
@@ -100,6 +109,16 @@ on conflict (id) do nothing;
 --   latest requests:   select created_at, status, username, answers, prompt from prompt_log order by id desc limit 100;
 --   what got blocked:  select created_at, reason, answers from prompt_log where status = 'blocked' order by id desc;
 --   most-picked style: select answers->>'imageGenerationStyle' s, count(*) from prompt_log where status = 'drawn' group by 1 order by 2 desc;
+
+-- Visitors and the three-per-IP limit:
+--   visitors today:    select count(*) from visitors where last_seen > now() - interval '1 day';
+--   used all three:    select ip_hash, count(*) n from portraits group by 1 having count(*) >= 3 order by 2 desc;
+--   give one IP more:  delete from portraits where ip_hash = '<hash>';   -- or raise LIMIT_PER_IP
+--
+-- Upgrading from the first version of this schema, which had spending caps:
+--   drop function if exists public.spent_since(timestamptz);
+--   drop index if exists public.portraits_by_name;
+--   drop index if exists public.portraits_by_day;
 
 -- Moderating by hand (Table Editor or SQL):
 --   hide a post:       update portraits set hidden = true  where id = '...';

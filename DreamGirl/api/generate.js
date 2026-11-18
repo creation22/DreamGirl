@@ -5,22 +5,15 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { getStore, StoreError } from "./_lib/store.js";
 import { drawPortrait, GenerateError, modelLabel } from "./_lib/surplus.js";
 import { readJson, send, sha256, visitorHash } from "./_lib/http.js";
+import { PER_IP } from "./_lib/limit.js";
 import { checkAnswers, normalizeHandle } from "../src/utils/moderation.js";
 import { generatePrompt } from "../src/utils/generateprompt.js";
 import { captionFor, questions } from "../src/constants/question.js";
 
-// Abuse limits. There's no login, so these layer up:
-//  - per visitor (hashed IP): a burst limit and a daily limit
-//  - per username: a daily limit, so one name can't be fed from many IPs
-//  - for the whole site: an hourly and a daily spending cap. Whatever anyone does,
-//    spend can't pass these, so they are the real ceiling on cost.
-//  - optional bot check (Cloudflare Turnstile) when TURNSTILE_SECRET_KEY is set.
-const PER_10_MIN = Number(process.env.LIMIT_PER_10_MIN) || 6;
-const PER_DAY = Number(process.env.LIMIT_PER_DAY) || 30;
-const PER_NAME_DAY = Number(process.env.LIMIT_PER_USERNAME_DAY) || 30;
-const DAILY_BUDGET_MICRO = Math.round((Number(process.env.DAILY_BUDGET_USD) || 5) * 1e6);
-const HOURLY_BUDGET_MICRO = Math.round((Number(process.env.HOURLY_BUDGET_USD) || 1) * 1e6);
-
+// There's no login, so a visitor is the salted hash of their IP: three portraits per IP,
+// for good. Every portrait ever drawn from that IP counts, including ones since removed or
+// hidden. An optional bot check (Cloudflare Turnstile, when TURNSTILE_SECRET_KEY is set)
+// keeps scripts from calling this straight.
 async function passesBotCheck(token, req) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return true;
@@ -96,20 +89,10 @@ export default async function handler(req, res) {
       return reply("limited", 403, "We couldn't check that you're human. Reload the page and try again.");
     }
 
-    const now = Date.now();
-    const ago = (ms) => new Date(now - ms).toISOString();
-    const startOfDay = new Date(new Date(now).toISOString().slice(0, 10)).toISOString();
-    const [recent, today, byName, spentToday, spentHour] = await Promise.all([
-      store.countSince(ipHash, ago(10 * 60_000)),
-      store.countSince(ipHash, ago(86_400_000)),
-      store.countSinceForName(username, ago(86_400_000)),
-      store.spentSince(startOfDay),
-      store.spentSince(ago(3_600_000)),
-    ]);
-    if (recent >= PER_10_MIN) return reply("limited", 429, "That's a lot of portraits at once. Take a breather and try again in a few minutes.");
-    if (today >= PER_DAY || byName >= PER_NAME_DAY) return reply("limited", 429, "You've hit today's portrait limit. Come back tomorrow.");
-    if (spentToday >= DAILY_BUDGET_MICRO) return reply("limited", 503, "Today's free portraits are used up. Come back tomorrow.");
-    if (spentHour >= HOURLY_BUDGET_MICRO) return reply("limited", 503, "Lots of people are dreaming right now. Try again in a few minutes.");
+    const used = await store.countForIp(ipHash);
+    if (used >= PER_IP) {
+      return reply("limited", 429, `That's all ${PER_IP} of your portraits. Thanks for dreaming with DreamHer.`);
+    }
 
     const drawn = await drawPortrait(prompt.positive);
     // Kept on the entry so a failure after this point still logs what Surplus charged.
@@ -147,6 +130,7 @@ export default async function handler(req, res) {
         seconds: Math.round(drawn.ms / 100) / 10,
       },
       prompt: prompt.positive,
+      quota: { used: used + 1, limit: PER_IP, remaining: Math.max(0, PER_IP - used - 1) },
     });
   } catch (e) {
     if (e instanceof SyntaxError) return reply("invalid", 400, "Bad JSON.");
